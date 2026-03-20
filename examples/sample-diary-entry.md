@@ -4,6 +4,7 @@
 **Project**: /Users/pawelgershkovich/Vault/Developer/Codex-Layered-Learning
 **Git Branch**: main
 **Session**: 1
+**Session ID**: codex-2026-03-20-01
 
 ## Task Summary
 Defined the initial architecture for Codex Layered Learning as a Codex-native analogue to Claude Layered Learning. The main focus was preserving the useful layered-learning outcome while keeping runtime memory fully isolated from Claude Code.
@@ -23,17 +24,19 @@ Defined the initial architecture for Codex Layered Learning as a Codex-native an
 ## Actions Taken
 - Files created: design notes, plan notes, example artifacts
 - Files edited: repository documentation only
-- Commands executed: directory creation, local file inspection
-- Verification performed: checked the current Claude Layered Learning layout and compared it against the proposed Codex layout
+- Commands executed: context incomplete; exact early shell history was not recovered because the conversation already preserved the durable decisions
+- Verification performed: compared the current Claude Layered Learning layout against the proposed Codex layout
 
 ## Challenges Encountered
 - Needed to preserve the useful parts of the Claude layered loop without copying Claude-specific memory surfaces
 - Needed to avoid designs that would accidentally create cross-agent confusion in working repositories
+- Needed to redact comparative notes that included internal path details not required for the durable record
 
 ## Solutions Applied
 - Mapped the Claude design to Codex-native destinations
 - Kept centralized diary/reflection storage but project-scoped memory
 - Kept markdown canonical so the system remains transparent and inspectable
+- Replaced non-essential sensitive path fragments with higher-level descriptions before writing the diary
 
 ## User Preferences Observed
 
@@ -46,7 +49,9 @@ Defined the initial architecture for Codex Layered Learning as a Codex-native an
 - Avoid repo-local runtime memory folders
 - Prefer file-first designs before introducing databases or MCP indexing
 - Keep approval strict for durable instruction changes
+- Capture user preferences only when they are stable enough to matter in future sessions
 
 ## Notes
 - A future index layer may be useful, but only as a read/search layer on top of the markdown corpus
 - Example files should remain small and curated
+- Context incomplete: a few disposable scratch notes were intentionally omitted because they did not affect the durable outcome

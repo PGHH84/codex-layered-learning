@@ -57,6 +57,21 @@ The deferred loop runs separately:
 
 This loop is responsible for identifying stable patterns instead of reacting to one-off events.
 
+## Runtime authority
+
+The repository runtime skills are the authoritative execution surface for Codex Layered Learning.
+
+- `skills/wrap-up/SKILL.md`
+- `skills/diary/SKILL.md`
+- `skills/reflect/SKILL.md`
+
+These runtime skills are the source of truth for behavior.
+
+- Installed copies under `~/.agents/skills/` should be synchronized from the repository skill files
+- `commands/*.md` are reference docs only if retained
+- Behavioral changes must land in the runtime skills first
+- Supporting docs, examples, fixtures, and scripts should be updated after the runtime skills to keep the repository aligned
+
 ## Storage Model
 
 Markdown files are the source of truth in v1.
@@ -88,10 +103,13 @@ Markdown files are the source of truth in v1.
 - Diary stays centralized as the raw observation stream
 - Reflections stay centralized as the synthesis layer
 - Project-filtered reflection is driven by metadata inside diary entries, not by diary folder structure
+- Project slugs are derived from canonical project root paths so unrelated projects with the same basename do not collide
 
 This mirrors the current Claude Layered Learning setup while staying Codex-native.
 
 ## Commands
+
+`commands/*.md` can summarize purpose, data shape, and examples, but they are not runtime authority. The runtime skills own operational behavior.
 
 ### `wrap-up`
 
@@ -99,7 +117,7 @@ This mirrors the current Claude Layered Learning setup while staying Codex-nativ
 
 Behavior:
 
-- Determine the current project slug from the working directory
+- Determine the current project slug from the canonical project root path, not only the working-directory basename
 - Inspect current session context first
 - Optionally inspect repo state for changed files and verification evidence
 - Summarize:
@@ -125,6 +143,7 @@ Behavior:
 
 - Use active conversation context as the primary source
 - Fall back to session logs only when context is incomplete and needed
+- Derive the project slug from the canonical project root path so identical basenames do not collide
 - Write a structured diary entry to `~/.codex/memory/diary/`
 - Capture:
   - task summary
@@ -152,7 +171,7 @@ Behavior:
   - all unprocessed entries
   - last N entries
   - date range
-  - project slug
+  - project slug derived from the canonical project root path
   - keyword
 - Read supporting context:
   - prior reflections
@@ -162,6 +181,7 @@ Behavior:
 - Group repeated learnings
 - Apply scope and confidence rules
 - Write a reflection file to `~/.codex/memory/reflections/`
+- Update `processed.log` only after the user accepts the reflection pass as complete or explicitly asks to mark the analyzed entries as processed
 - Propose durable promotions without applying them automatically
 
 ## Scope Routing
@@ -289,9 +309,10 @@ Structure:
 # Session Diary Entry
 
 **Date**: YYYY-MM-DD
-**Project**: <abs path or slug>
+**Project**: <canonical absolute project root path>
 **Git Branch**: <branch or n/a>
 **Session**: N
+**Session ID**: <optional when available>
 
 ## Task Summary
 ...

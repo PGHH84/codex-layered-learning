@@ -3,15 +3,15 @@
 ## Current State
 **Last updated:** 2026-03-20 | **Session:** 3
 
-Initial design complete. The project is explicitly isolated from Claude Code runtime surfaces and uses markdown under `~/.codex/` as the canonical memory store. The next step is to define the operational command docs for `wrap-up`, `diary`, and `reflect`.
+The runtime contract is now anchored in the repository skills, and this `MEMORY.md` file is the source of truth for the current session number. Standalone `diary` uses a diary-scan fallback only when project memory is missing or uninitialized.
 
 **Next steps:**
-1. Define the `wrap-up` skill behavior
-2. Define the `diary` command contract
-3. Define the `reflect` command contract
+1. Add install verification and manual fixtures
+2. Document the Codex-native context-loss fallback decision
+3. Run the final consistency sweep
 
 ## Key Notes
-- [feedback-local-files-first.md](feedback-local-files-first.md) — example of a typed durable feedback note
-- `project_storage_layout.md` — canonical runtime layout under `~/.codex/`
-- `feedback_no_repo_local_memory.md` — do not create repo-local runtime memory folders
-- `reference_scope_routing.md` — global vs project-specific routing rules
+- `project_*.md`: [project_storage_layout.md](project_storage_layout.md) — canonical runtime layout under `~/.codex/`
+- `feedback_*.md`: [feedback_no_repo_local_memory.md](feedback_no_repo_local_memory.md) — keep runtime memory out of working repositories
+- `reference_*.md`: [reference_scope_routing.md](reference_scope_routing.md) — supporting rules for project-vs-global routing
+- `user_*.md`: no example note yet; create one only when a stable recurring user preference materially affects future execution

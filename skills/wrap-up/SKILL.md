@@ -1,6 +1,6 @@
 ---
 name: wrap-up
-description: Use when the user says "wrap up", "close session", "end session", "wrap things up", "close out this task", or invokes /wrap-up. Runs the Codex Layered Learning immediate loop: inspect the session, update project memory, and trigger diary.
+description: Use when the user says "wrap up", "close session", "end session", "wrap things up", "close out this task", or invokes /wrap-up for end-of-session closeout of the current Codex task
 ---
 
 # Codex Layered Learning Wrap-Up
@@ -25,6 +25,13 @@ description: Use when the user says "wrap up", "close session", "end session", "
 - Never auto-commit, auto-push, auto-deploy, auto-rename, auto-move, or do destructive cleanup
 - Never make automatic durable instruction changes
 
+## Runtime Paths
+
+- Global runtime root: `~/.codex/`
+- Project memory: `~/.codex/projects/<slug>/memory/MEMORY.md`
+- Central diary: `~/.codex/memory/diary/`
+- Central reflections: `~/.codex/memory/reflections/`
+
 ## Trigger Phrases
 
 Run this skill when the user says things like:
@@ -46,7 +53,7 @@ Run these steps in order:
    - verification commands and results
    - current branch, if any
 3. Update `~/.codex/projects/<slug>/memory/MEMORY.md`.
-4. Trigger `diary` using the contract in [`commands/diary.md`](../../commands/diary.md).
+4. Trigger `diary` using the installed sibling skill at `../diary/SKILL.md`.
 5. Report optional promotion candidates and follow-ups without applying them.
 
 ## Session Inspection Rules
@@ -55,10 +62,26 @@ Run these steps in order:
 - Use shell or git inspection only to tighten accuracy
 - If project identity is ambiguous, ask one direct question before writing memory
 - Use `n/a` for git metadata when the working directory is not inside a git repository
+- Derive `<slug>` from the canonical project root path using the same deterministic path-to-slug transform as `diary` and `reflect`
+- Never use only the working-directory basename as the project slug
+
+### Path-To-Slug Transform
+
+Use this exact transform so all three skills agree on project identity:
+
+1. If inside a git repository, resolve the canonical project root with `git rev-parse --show-toplevel`.
+2. Otherwise, use the canonical absolute working directory.
+3. Resolve symlinks before deriving the slug.
+4. Replace every `/` in the canonical absolute path with `-`.
+
+Example:
+
+- `/Users/pawelgershkovich/Vault/Developer/OneNote-To-Notion`
+- `-Users-pawelgershkovich-Vault-Developer-OneNote-To-Notion`
 
 ## Project Memory Update Rules
 
-Project memory lives at `~/.codex/projects/<slug>/memory/MEMORY.md`.
+Project memory lives at `~/.codex/projects/<slug>/memory/MEMORY.md`, using the shared path-derived slug for the project root.
 
 When updating `MEMORY.md`:
 
@@ -67,7 +90,64 @@ When updating `MEMORY.md`:
 - keep `**Next steps:**` as a short numbered list
 - keep `## Key Notes` as an index of durable note files, not a second diary
 - prefer linking existing durable notes instead of inventing new ones during wrap-up
-- create `MEMORY.md` if missing, using the structure shown in [`examples/sample-memory.md`](../../examples/sample-memory.md)
+- create `MEMORY.md` if missing, using this structure:
+
+```md
+# <Project Name> Memory
+
+## Current State
+**Last updated:** YYYY-MM-DD | **Session:** N
+
+[2-5 lines on current state]
+
+**Next steps:**
+1. ...
+2. ...
+
+## Key Notes
+- [project_*.md](...) — durable project facts
+- [feedback_*.md](...) — reusable lessons from this project
+- [reference_*.md](...) — supporting references
+- [user_*.md](...) — stable user/project preferences when justified
+```
+
+## Session Number Source of Truth
+
+The project memory file is the source of truth for the session number.
+
+- preferred source of truth: `~/.codex/projects/<slug>/memory/MEMORY.md`
+- fallback: scan matching diary files for the same project and date only when `MEMORY.md` is missing or uninitialized
+- `wrap-up` must set or confirm the session number in `MEMORY.md` before triggering `diary`
+- when `wrap-up` invokes `diary`, both steps must use the same session number instead of incrementing independently
+
+## Typed Note Policy
+
+When `wrap-up` surfaces a durable-learning candidate, use the typed memory policy in [`docs/typed-memory-notes.md`](../../docs/typed-memory-notes.md) to decide whether a typed note is warranted.
+
+- `project_*.md`: stable project facts, invariants, storage layout, architecture, or repo-specific conventions
+- `feedback_*.md`: repeated lessons or guardrails that future work in this project should follow
+- `reference_*.md`: supporting reference material such as routing maps, glossaries, checklists, or lookup-oriented context
+- `user_*.md`: stable recurring user or project preferences that materially affect execution
+
+Avoid proposing a new typed note when:
+
+- the observation is one-off or still uncertain
+- the information belongs in the `Current State` snapshot or next steps only
+- an existing typed note can be strengthened instead
+- repo docs, `AGENTS.md`, or a skill would be the clearer long-term owner
+
+`wrap-up` may mention a typed note candidate, but it must not create the note automatically.
+
+## Promotion Reporting Levels
+
+When reporting durable follow-ups, keep the recommendation at the right level:
+
+- mention candidate only: the signal is worth noting but does not yet justify a durable edit
+- propose creating a typed note: the evidence fits project memory and the note type is clear
+- propose editing repo docs: the learning belongs in repository documentation that already owns the subject
+- propose editing `AGENTS.md`: the learning is a repeated operating rule for repo-level or global agent behavior
+
+All four are proposals only. `wrap-up` does not apply durable edits automatically.
 
 ## What To Summarize
 
@@ -85,6 +165,7 @@ The wrap-up summary should cover:
 - `diary` may also run standalone
 - the diary entry should use current conversation context first
 - `wrap-up` must not fold reflection or promotion logic into the diary step
+- after the memory update, open and follow the installed sibling skill at `../diary/SKILL.md`
 
 ## What Must Never Happen Automatically
 
@@ -109,4 +190,6 @@ Before treating this skill spec as correct, verify that:
 
 - the execution order is inspect session -> update project memory -> trigger `diary` -> report promotions
 - the safety boundaries forbid repo-local memory, `.claude` writes, auto shipping actions, and automatic durable instruction changes
-- the memory update guidance stays consistent with [`examples/sample-memory.md`](../../examples/sample-memory.md)
+- the memory update guidance includes the inline `MEMORY.md` structure and the shared path-to-slug transform
+- the typed note policy covers `feedback_*.md`, `project_*.md`, `reference_*.md`, and `user_*.md`
+- the session number source of truth and fallback are explicit
