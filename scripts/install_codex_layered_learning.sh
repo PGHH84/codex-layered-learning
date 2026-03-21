@@ -22,6 +22,7 @@ install_skill "diary"
 install_skill "reflect"
 
 mkdir -p \
+  "$CODEX_ROOT_DIR/skills/wrap-up" \
   "$CODEX_ROOT_DIR/memory/diary" \
   "$CODEX_ROOT_DIR/memory/reflections" \
   "$CODEX_ROOT_DIR/projects"
@@ -32,3 +33,4 @@ printf 'Codex Layered Learning installer is idempotent; rerun it any time to res
 printf 'Repository source of truth: %s\n' "$SKILLS_SRC_DIR"
 printf 'Installed Codex Layered Learning skills to %s\n' "$SKILLS_DST_DIR"
 printf 'Ensured runtime directories exist under %s\n' "$CODEX_ROOT_DIR"
+printf 'Optional personal wrap-up directory is ready at %s\n' "$CODEX_ROOT_DIR/skills/wrap-up"

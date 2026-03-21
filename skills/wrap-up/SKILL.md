@@ -31,6 +31,19 @@ description: Use when the user says "wrap up", "close session", "end session", "
 - Project memory: `~/.codex/projects/<slug>/memory/MEMORY.md`
 - Central diary: `~/.codex/memory/diary/`
 - Central reflections: `~/.codex/memory/reflections/`
+- Optional personal extension: `~/.codex/skills/wrap-up/personal.md`
+
+## Optional Personal Extension
+
+`~/.codex/skills/wrap-up/personal.md` is an optional machine-local instruction file for private post-memory-update steps.
+
+- it is separate from the installed runtime skills under `~/.agents/skills/`
+- it is an extension point, not an override mechanism
+- normal Codex approval and safety rules still apply
+- if the file is absent, `wrap-up` continues with no warning noise
+- if its instructions are unclear, blocked, or not approved, report that briefly and continue to `diary`
+- keep edits scoped to the named files, entries, fields, or sections instead of broadening them to unrelated metadata
+- when it constrains a field to exact values or formats, use one of those exact values or report the step as incomplete instead of guessing
 
 ## Trigger Phrases
 
@@ -53,8 +66,11 @@ Run these steps in order:
    - verification commands and results
    - current branch, if any
 3. Update `~/.codex/projects/<slug>/memory/MEMORY.md`.
-4. Trigger `diary` using the installed sibling skill at `../diary/SKILL.md`.
-5. Report optional promotion candidates and follow-ups without applying them.
+4. Check for `~/.codex/skills/wrap-up/personal.md`.
+5. If present, follow it as a machine-local instruction file under the normal Codex approval and safety rules.
+6. If the personal-extension pass materially changed tracked project state or completed a pending wrap-up follow-up, reconcile `~/.codex/projects/<slug>/memory/MEMORY.md` so it reflects the final post-extension state.
+7. Trigger `diary` using the installed sibling skill at `../diary/SKILL.md`.
+8. Report optional promotion candidates and follow-ups without applying them.
 
 ## Session Inspection Rules
 
@@ -76,8 +92,8 @@ Use this exact transform so all three skills agree on project identity:
 
 Example:
 
-- `/Users/pawelgershkovich/Vault/Developer/OneNote-To-Notion`
-- `-Users-pawelgershkovich-Vault-Developer-OneNote-To-Notion`
+- `/Users/example/Developer/OneNote-To-Notion`
+- `-Users-example-Developer-OneNote-To-Notion`
 
 ## Project Memory Update Rules
 
@@ -90,6 +106,7 @@ When updating `MEMORY.md`:
 - keep `**Next steps:**` as a short numbered list
 - keep `## Key Notes` as an index of durable note files, not a second diary
 - prefer linking existing durable notes instead of inventing new ones during wrap-up
+- after the optional personal-extension pass, refresh `Current State` and `Next steps` when needed so `MEMORY.md` reflects the final post-extension state instead of a stale pre-extension snapshot
 - create `MEMORY.md` if missing, using this structure:
 
 ```md
@@ -165,13 +182,31 @@ The wrap-up summary should cover:
 - `diary` may also run standalone
 - the diary entry should use current conversation context first
 - `wrap-up` must not fold reflection or promotion logic into the diary step
-- after the memory update, open and follow the installed sibling skill at `../diary/SKILL.md`
+- after the memory update, any optional personal-extension pass, and any required memory reconciliation, open and follow the installed sibling skill at `../diary/SKILL.md`
+- `diary` still runs when the personal extension is absent
+- `diary` still runs when the personal extension is only partially completed because its instructions were unclear, blocked, or not approved
+
+## Personal Extension Guardrails
+
+When `wrap-up` encounters `~/.codex/skills/wrap-up/personal.md`:
+
+- treat it as a machine-local instruction file, not a shell script or repository skill
+- do not let it override the core `wrap-up` contract or safety boundaries
+- keep normal approval rules in force for any action it requests
+- only edit the file, entry, fields, or sections named by the instruction
+- do not modify unrelated headers, summaries, or metadata unless the instruction explicitly says to
+- when an instruction constrains a field to exact values or formats, use one of those exact values; if the correct value cannot be chosen without guessing, report that step as incomplete and continue
+- never write to `~/.claude/**`
+- never create repo-local runtime memory
+- never edit repo files unless the user explicitly requested that in the session
+- never auto-commit, auto-push, auto-deploy, auto-rename, auto-move, or do destructive cleanup unless the user explicitly requested it in the session
 
 ## What Must Never Happen Automatically
 
 - writing runtime memory into the working repository
 - writing anything under `~/.claude/`
 - creating or editing repo `AGENTS.md`, global `~/.codex/AGENTS.md`, or new skills without approval
+- editing repo files unless the user explicitly requested that in the session
 - creating new durable typed notes as a side effect of wrap-up unless the user explicitly approves that promotion
 - commit, push, deploy, rename, move, or destructive cleanup
 
@@ -180,6 +215,7 @@ The wrap-up summary should cover:
 End with a concise report that states:
 
 - what was captured in project memory
+- whether the optional personal extension ran, was absent, or stopped short
 - that `diary` was run
 - any open risks
 - any durable promotion candidates that need approval
@@ -188,8 +224,12 @@ End with a concise report that states:
 
 Before treating this skill spec as correct, verify that:
 
-- the execution order is inspect session -> update project memory -> trigger `diary` -> report promotions
+- the execution order is inspect session -> update project memory -> check optional personal extension -> reconcile project memory if needed -> trigger `diary` -> report promotions
+- the execution order includes a memory reconciliation pass when the personal extension materially changes tracked state
 - the safety boundaries forbid repo-local memory, `.claude` writes, auto shipping actions, and automatic durable instruction changes
+- the optional personal extension path and its separation from installed runtime skills are explicit
+- the optional personal extension cannot skip `diary` or weaken approval rules
+- the optional personal extension stays within its named edit scope and does not invent alternative exact field values
 - the memory update guidance includes the inline `MEMORY.md` structure and the shared path-to-slug transform
 - the typed note policy covers `feedback_*.md`, `project_*.md`, `reference_*.md`, and `user_*.md`
 - the session number source of truth and fallback are explicit

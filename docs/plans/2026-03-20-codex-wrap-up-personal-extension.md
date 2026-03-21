@@ -130,7 +130,7 @@ Write `examples/personal.md` as a private template for `~/.codex/skills/wrap-up/
 The template should:
 - explain that the real file lives under `~/.codex/skills/wrap-up/personal.md`
 - explain that it is optional and machine-local
-- include one concrete example based on `~/Developer/project-status.md`
+- include one concrete example based on `~/work-log.md`
 - state that normal approval and safety rules still apply
 
 Expected: users have a copyable template without committing personal config.

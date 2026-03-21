@@ -1,7 +1,7 @@
 # Session Diary Entry
 
 **Date**: 2026-03-20
-**Project**: /Users/pawelgershkovich/Vault/Developer/Codex-Layered-Learning
+**Project**: /Users/example/Developer/Codex-Layered-Learning
 **Git Branch**: main
 **Session**: 1
 **Session ID**: codex-2026-03-20-01

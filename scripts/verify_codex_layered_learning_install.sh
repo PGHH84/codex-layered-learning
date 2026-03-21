@@ -56,9 +56,16 @@ check_skill_sync "wrap-up"
 check_skill_sync "diary"
 check_skill_sync "reflect"
 
+check_dir "$CODEX_ROOT_DIR/skills/wrap-up" "personal wrap-up directory"
 check_dir "$CODEX_ROOT_DIR/memory/diary" "diary directory"
 check_file "$CODEX_ROOT_DIR/memory/reflections/processed.log" "processed.log"
 check_dir "$CODEX_ROOT_DIR/projects" "projects directory"
+
+if [[ -f "$CODEX_ROOT_DIR/skills/wrap-up/personal.md" ]]; then
+  printf '[ok] optional personal extension present: %s\n' "$CODEX_ROOT_DIR/skills/wrap-up/personal.md"
+else
+  printf '[ok] optional personal extension absent: %s\n' "$CODEX_ROOT_DIR/skills/wrap-up/personal.md"
+fi
 
 if [[ "$status" -eq 0 ]]; then
   printf 'Codex Layered Learning install verification passed.\n'

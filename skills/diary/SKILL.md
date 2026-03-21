@@ -52,8 +52,8 @@ Use this exact transform so `diary`, `wrap-up`, and `reflect` agree on project i
 
 Example:
 
-- `/Users/pawelgershkovich/Vault/Developer/OneNote-To-Notion`
-- `-Users-pawelgershkovich-Vault-Developer-OneNote-To-Notion`
+- `/Users/example/Developer/OneNote-To-Notion`
+- `-Users-example-Developer-OneNote-To-Notion`
 
 ## Inputs
 
