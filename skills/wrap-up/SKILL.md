@@ -18,19 +18,17 @@ description: Use when the user says "wrap up", "close session", "end session", "
 
 ## Hard Safety Boundaries
 
-- Never write to `~/.claude/**`
-- Never install Claude-compatible hooks, commands, skills, or runtime files
+- Never install agent-specific hooks, commands, or runtime files without approval
 - Never create repo-local runtime memory folders in working repositories
-- Keep runtime memory only under `~/.codex/`
 - Never auto-commit, auto-push, auto-deploy, auto-rename, auto-move, or do destructive cleanup
 - Never make automatic durable instruction changes
 
 ## Runtime Paths
 
-- Global runtime root: `~/.codex/`
 - Project memory: `~/.codex/projects/<slug>/memory/MEMORY.md`
-- Central diary: `~/.codex/memory/diary/`
-- Central reflections: `~/.codex/memory/reflections/`
+  (symlinked → `~/.claude/projects/<slug>/memory/MEMORY.md` — shared with Claude Code)
+- Central diary: `~/.agents/memory/diary/` (shared — read by both agents' reflect)
+- Central reflections: `~/.agents/memory/reflections/`
 - Optional personal extension: `~/.codex/skills/wrap-up/personal.md`
 
 ## Optional Personal Extension

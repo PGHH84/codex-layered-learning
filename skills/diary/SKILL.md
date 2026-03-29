@@ -20,17 +20,16 @@ This skill is the runtime source of truth for `diary`.
 
 ## Safety Boundaries
 
-- Never write to `~/.claude/**`
 - Never create repo-local runtime memory folders in working repositories
-- Keep runtime memory only under `~/.codex/`
 - Never perform reflection, confidence scoring, or promotion routing inside `diary`
 - Never copy secrets, tokens, keys, cookies, credentials, or other highly sensitive raw values into the diary entry
 - Replace sensitive values with short descriptions such as `[redacted token]` or `[sensitive customer data omitted]`
 
 ## Runtime Paths
 
-- Diary output: `~/.codex/memory/diary/YYYY-MM-DD-<project-slug>-session-N.md`
+- Diary output: `~/.agents/memory/diary/YYYY-MM-DD-<project-slug>-session-N.md`
 - Project memory that may already exist: `~/.codex/projects/<slug>/memory/MEMORY.md`
+  (this is a symlink to `~/.claude/projects/<slug>/memory/MEMORY.md` — one shared file)
 
 ## Session Number Source of Truth
 
@@ -75,7 +74,7 @@ Example:
 5. If context is still incomplete, say so explicitly instead of inventing details.
 6. Redact or summarize sensitive values before writing.
 7. Capture only stable user preferences that materially affect future execution.
-8. Write the diary entry to `~/.codex/memory/diary/`.
+8. Write the diary entry to `~/.agents/memory/diary/`.
 
 ## Required Sections
 

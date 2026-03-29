@@ -20,19 +20,29 @@ This skill is the runtime source of truth for `reflect`.
 
 ## Safety Boundaries
 
-- Never write to `~/.claude/**`
 - Never create repo-local runtime memory folders in working repositories
-- Keep runtime memory only under `~/.codex/`
-- Never auto-apply edits to `AGENTS.md`, repo docs, project memory notes, or skills
+- Never auto-apply edits to instruction files, repo docs, project memory notes, or skills
 - Keep markdown as the source of truth in v1
 
 ## Runtime Paths
 
-- Central diary: `~/.codex/memory/diary/`
-- Central reflections: `~/.codex/memory/reflections/`
-- Processed index: `~/.codex/memory/reflections/processed.log`
-- Project memory: `~/.codex/projects/<slug>/memory/`
-- Global durable guidance candidate: `~/.codex/AGENTS.md`
+- Central diary: `~/.agents/memory/diary/` (shared — written by both Claude Code and Codex)
+- Central reflections: `~/.agents/memory/reflections/`
+- Processed index: `~/.agents/memory/reflections/processed.log`
+- Project memory: `~/.codex/projects/<slug>/memory/` (symlinked → `~/.claude/projects/<slug>/memory/`)
+- Global durable guidance candidates: `~/.codex/AGENTS.md` AND `~/.claude/CLAUDE.md`
+
+## Promotion Model
+
+Reflect always promotes to **both agents** — no agent-specific rules.
+
+| Scope | Target |
+|-------|--------|
+| Global (cross-project) | `~/.claude/CLAUDE.md` AND `~/.codex/AGENTS.md` |
+| Project (triumvirate — `SKILL.md` exists) | `[project]/SKILL.md` only (CLAUDE.md @imports it; AGENTS.md mirrors it) |
+| Project (non-triumvirate) | `[project]/CLAUDE.md` AND `[project]/AGENTS.md` |
+
+Before promoting, check if `[project]/SKILL.md` exists to determine the project target.
 
 ## Path-To-Slug Transform
 
@@ -47,7 +57,7 @@ Use this exact transform so `reflect`, `wrap-up`, and `diary` agree on project i
 
 Primary corpus:
 
-- centralized diary entries from `~/.codex/memory/diary/`
+- centralized diary entries from `~/.agents/memory/diary/`
 
 Supported filters:
 
@@ -59,23 +69,23 @@ Supported filters:
 
 Supporting context:
 
-- prior reflections from `~/.codex/memory/reflections/`
-- `~/.codex/memory/reflections/processed.log`
+- prior reflections from `~/.agents/memory/reflections/`
+- `~/.agents/memory/reflections/processed.log`
 - project `~/.codex/projects/<slug>/memory/MEMORY.md` when project context is relevant
 - existing typed project memory notes under `~/.codex/projects/<slug>/memory/` when project-memory promotion candidates are being considered
-- repo `AGENTS.md` and relevant repo docs when repo-level promotion candidates are being considered
-- global `~/.codex/AGENTS.md` when evaluating global promotion candidates
+- repo `AGENTS.md`, repo `SKILL.md`, and relevant repo docs when repo-level promotion candidates are being considered
+- global `~/.codex/AGENTS.md` AND `~/.claude/CLAUDE.md` when evaluating global promotion candidates
 
 ## Processing Workflow
 
 1. Resolve the filter set and project slug mapping using the shared path-derived slug rule.
-2. Load matching diary entries from `~/.codex/memory/diary/`.
+2. Load matching diary entries from `~/.agents/memory/diary/`.
 3. Skip entries already listed in `processed.log` unless the user explicitly requests reprocessing.
-4. Read supporting context that is relevant to the filtered corpus, including recent reflections and the current contents of plausible promotion targets.
+4. Read supporting context that is relevant to the filtered corpus, including recent reflections and the current contents of plausible promotion targets (both agents).
 5. Group repeated patterns, explicit rule violations, contradictions, and one-off observations.
 6. Carry forward recent one-off observations from prior reflections when the same signal reappears.
-7. Route each repeated learning by scope and destination, strengthening weak existing guidance before proposing a brand-new durable note.
-8. Write the reflection file to `~/.codex/memory/reflections/YYYY-MM-DD-reflection-N.md`.
+7. Route each repeated learning by scope and destination using the Promotion Model, strengthening weak existing guidance before proposing a brand-new durable note.
+8. Write the reflection file to `~/.agents/memory/reflections/YYYY-MM-DD-reflection-N.md`.
 9. Update `processed.log` only after the user accepts the reflection pass as complete or explicitly asks to mark the analyzed diary entries as processed.
 
 ## Carry-Forward Rule

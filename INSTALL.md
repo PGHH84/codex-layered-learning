@@ -85,7 +85,7 @@ This file is:
 - not created by the installer
 - not required by the verifier
 
-Use the redacted template in [examples/personal.md](examples/personal.md) as a starting point.
+Use the redacted template in [examples/personal.md](50_Developer/56_Codex-Layered-Learning/examples/personal.md) as a starting point.
 
 ## Updating
 
