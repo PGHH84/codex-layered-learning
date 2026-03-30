@@ -73,9 +73,9 @@ reflect (pattern layer)
 
 The runtime source of truth is the repository skill set under `skills/`:
 
-- [`skills/wrap-up/SKILL.md`](50_Developer/56_Codex-Layered-Learning/skills/wrap-up/SKILL.md)
-- [`skills/diary/SKILL.md`](50_Developer/56_Codex-Layered-Learning/skills/diary/SKILL.md)
-- [`skills/reflect/SKILL.md`](50_Developer/56_Codex-Layered-Learning/skills/reflect/SKILL.md)
+- [`skills/wrap-up/SKILL.md`](skills/wrap-up/SKILL.md)
+- [`skills/diary/SKILL.md`](skills/diary/SKILL.md)
+- [`skills/reflect/SKILL.md`](skills/reflect/SKILL.md)
 
 Supporting rules:
 
@@ -100,7 +100,7 @@ Then in your Codex/OpenAI coding workflow:
 
 If your runtime does not auto-discover installed skills under `~/.agents/skills/`, use the repo or installed `SKILL.md` files directly as local instructions.
 
-For the full operational guide, see [INSTALL.md](50_Developer/56_Codex-Layered-Learning/INSTALL.md).
+For the full operational guide, see [INSTALL.md](INSTALL.md).
 
 ## Runtime Storage
 
@@ -159,13 +159,13 @@ Guardrails:
 - core safety rules still win, including no writes to `~/.claude/**`, no repo-local runtime memory, and no repo-file edits unless explicitly requested in-session
 - if the file is present but blocked or unclear, `wrap-up` still runs `diary`
 
-Use the redacted template in [examples/personal.md](50_Developer/56_Codex-Layered-Learning/examples/personal.md) as a starting point.
+Use the redacted template in [examples/personal.md](examples/personal.md) as a starting point.
 
 ## Commands And Skills
 
-- `wrap-up`: runtime behavior lives in [`skills/wrap-up/SKILL.md`](50_Developer/56_Codex-Layered-Learning/skills/wrap-up/SKILL.md)
-- `diary`: reference summary in [`commands/diary.md`](50_Developer/56_Codex-Layered-Learning/commands/diary.md), runtime behavior in [`skills/diary/SKILL.md`](50_Developer/56_Codex-Layered-Learning/skills/diary/SKILL.md)
-- `reflect`: reference summary in [`commands/reflect.md`](50_Developer/56_Codex-Layered-Learning/commands/reflect.md), runtime behavior in [`skills/reflect/SKILL.md`](50_Developer/56_Codex-Layered-Learning/skills/reflect/SKILL.md)
+- `wrap-up`: runtime behavior lives in [`skills/wrap-up/SKILL.md`](skills/wrap-up/SKILL.md)
+- `diary`: reference summary in [`commands/diary.md`](commands/diary.md), runtime behavior in [`skills/diary/SKILL.md`](skills/diary/SKILL.md)
+- `reflect`: reference summary in [`commands/reflect.md`](commands/reflect.md), runtime behavior in [`skills/reflect/SKILL.md`](skills/reflect/SKILL.md)
 
 ## Context-Loss Fallback
 
@@ -179,7 +179,7 @@ Context-loss recovery is manual-only in v1.
 
 - [`skills/`](skills): runtime source of truth for `wrap-up`, `diary`, and `reflect`
 - [`commands/`](COMMANDS.md): reference-only summaries for `diary` and `reflect`
-- [`examples/`](50_Developer/51_Job-Search/3.%20Interview-Coach/references/examples.md): sample outputs and redacted templates
+- [`examples/`](examples): sample outputs and redacted templates
 - [`docs/`](docs): specs, plans, and typed-memory guidance
 - [`scripts/`](scripts): install and verification helpers
 - [`tests/`](tests): fixtures and manual verification coverage
@@ -201,8 +201,8 @@ This repository contains the Codex-native v1 runtime skills, examples, verificat
 
 See also:
 
-- [INSTALL.md](50_Developer/56_Codex-Layered-Learning/INSTALL.md)
-- [CHANGELOG.md](50_Developer/56_Codex-Layered-Learning/CHANGELOG.md)
+- [INSTALL.md](INSTALL.md)
+- [CHANGELOG.md](CHANGELOG.md)
 - [docs/typed-memory-notes.md](typed-memory-notes.md)
 - [docs/specs/2026-03-20-codex-layered-learning-design.md](2026-03-20-codex-layered-learning-design.md)
 

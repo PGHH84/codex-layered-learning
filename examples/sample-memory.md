@@ -11,7 +11,7 @@ The runtime contract is now anchored in the repository skills, and this `MEMORY.
 3. Run the final consistency sweep
 
 ## Key Notes
-- `project_*.md`: [project_storage_layout.md](50_Developer/56_Codex-Layered-Learning/examples/project_storage_layout.md) — canonical runtime layout under `~/.codex/`
+- `project_*.md`: [project_storage_layout.md](examples/project_storage_layout.md) — canonical runtime layout under `~/.codex/`
 - `feedback_*.md`: [feedback_no_repo_local_memory.md](feedback_no_repo_local_memory.md) — keep runtime memory out of working repositories
 - `reference_*.md`: [reference_scope_routing.md](reference_scope_routing.md) — supporting rules for project-vs-global routing
 - `user_*.md`: no example note yet; create one only when a stable recurring user preference materially affects future execution
