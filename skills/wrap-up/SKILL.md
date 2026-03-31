@@ -5,43 +5,49 @@ description: Use when the user says "wrap up", "close session", "end session", "
 
 # Codex Layered Learning Wrap-Up
 
+## Runtime authority
+
+This skill is the runtime source of truth for `wrap-up`.
+
+- `commands/` summaries are reference-only
+- behavioral changes must land here first and then be synchronized into installed copies under `~/.agents/skills/`
+
 ## Purpose
 
-`wrap-up` is the immediate loop entry point for Codex Layered Learning. It preserves fresh session context before it is lost by updating project memory and then invoking `diary`.
+`wrap-up` is the immediate closeout loop for Codex Layered Learning.
+
+Run four phases in order:
+
+1. `Ship It`
+2. `Remember It`
+3. `Review & Apply`
+4. `Diary Capture`
+
+Then ask whether to push.
 
 ## Non-Goals
 
-- Reflecting across multiple sessions
-- Applying durable promotions automatically
-- Editing repo instructions or global instructions without approval
-- Performing shipping actions such as commit, push, deploy, rename, move, or cleanup
+- cross-session synthesis across many diary entries
+- writing runtime memory into the working repository
+- reading from or writing to `~/.claude/**`
+- cross-agent memory sharing in this pass
 
 ## Hard Safety Boundaries
 
-- Never install agent-specific hooks, commands, or runtime files without approval
-- Never create repo-local runtime memory folders in working repositories
-- Never auto-commit, auto-push, auto-deploy, auto-rename, auto-move, or do destructive cleanup
-- Never make automatic durable instruction changes
+- never create repo-local runtime memory folders in working repositories
+- never write runtime memory under `~/.agents/memory/` or `~/.claude/**`
+- never auto-push
+- never auto-apply repo `AGENTS.md`, global `~/.codex/AGENTS.md`, typed-note, or new-skill changes without approval
+- never do speculative doc edits, speculative file moves, or destructive cleanup
 
 ## Runtime Paths
 
-- Project memory: `~/.codex/projects/<slug>/memory/MEMORY.md`
-  (symlinked → `~/.claude/projects/<slug>/memory/MEMORY.md` — shared with Claude Code)
-- Central diary: `~/.agents/memory/diary/` (shared — read by both agents' reflect)
-- Central reflections: `~/.agents/memory/reflections/`
-- Optional personal extension: `~/.codex/skills/wrap-up/personal.md`
-
-## Optional Personal Extension
-
-`~/.codex/skills/wrap-up/personal.md` is an optional machine-local instruction file for private post-memory-update steps.
-
-- it is separate from the installed runtime skills under `~/.agents/skills/`
-- it is an extension point, not an override mechanism
-- normal Codex approval and safety rules still apply
-- if the file is absent, `wrap-up` continues with no warning noise
-- if its instructions are unclear, blocked, or not approved, report that briefly and continue to `diary`
-- keep edits scoped to the named files, entries, fields, or sections instead of broadening them to unrelated metadata
-- when it constrains a field to exact values or formats, use one of those exact values or report the step as incomplete instead of guessing
+- project memory: `~/.codex/projects/<slug>/memory/MEMORY.md`
+- project durable typed notes: `~/.codex/projects/<slug>/memory/`
+- diary output: `~/.codex/memory/diary/`
+- reflections: `~/.codex/memory/reflections/`
+- global durable guidance: `~/.codex/AGENTS.md`
+- optional personal extension: `~/.codex/skills/wrap-up/personal.md`
 
 ## Trigger Phrases
 
@@ -54,34 +60,9 @@ Run this skill when the user says things like:
 - `close out this task`
 - `/wrap-up`
 
-## Execution Sequence
+## Path-To-Slug Transform
 
-Run these steps in order:
-
-1. Inspect the current session context first.
-2. Inspect repository state only when it improves the summary:
-   - changed files
-   - verification commands and results
-   - current branch, if any
-3. Update `~/.codex/projects/<slug>/memory/MEMORY.md`.
-4. Check for `~/.codex/skills/wrap-up/personal.md`.
-5. If present, follow it as a machine-local instruction file under the normal Codex approval and safety rules.
-6. If the personal-extension pass materially changed tracked project state or completed a pending wrap-up follow-up, reconcile `~/.codex/projects/<slug>/memory/MEMORY.md` so it reflects the final post-extension state.
-7. Trigger `diary` using the installed sibling skill at `../diary/SKILL.md`.
-8. Report optional promotion candidates and follow-ups without applying them.
-
-## Session Inspection Rules
-
-- Treat the active conversation as the primary source of truth
-- Use shell or git inspection only to tighten accuracy
-- If project identity is ambiguous, ask one direct question before writing memory
-- Use `n/a` for git metadata when the working directory is not inside a git repository
-- Derive `<slug>` from the canonical project root path using the same deterministic path-to-slug transform as `diary` and `reflect`
-- Never use only the working-directory basename as the project slug
-
-### Path-To-Slug Transform
-
-Use this exact transform so all three skills agree on project identity:
+Use this exact transform so `wrap-up`, `diary`, and `reflect` agree on project identity:
 
 1. If inside a git repository, resolve the canonical project root with `git rev-parse --show-toplevel`.
 2. Otherwise, use the canonical absolute working directory.
@@ -93,19 +74,60 @@ Example:
 - `/Users/example/Developer/OneNote-To-Notion`
 - `-Users-example-Developer-OneNote-To-Notion`
 
-## Project Memory Update Rules
+## Execution Sequence
 
-Project memory lives at `~/.codex/projects/<slug>/memory/MEMORY.md`, using the shared path-derived slug for the project root.
+Run these phases in order, then ask whether to push.
 
-When updating `MEMORY.md`:
+### Phase 1: `Ship It`
 
-- keep `## Current State` to a short 2-5 line snapshot
-- update `**Last updated:**` and `**Session:**`
-- keep `**Next steps:**` as a short numbered list
-- keep `## Key Notes` as an index of durable note files, not a second diary
-- prefer linking existing durable notes instead of inventing new ones during wrap-up
-- after the optional personal-extension pass, refresh `Current State` and `Next steps` when needed so `MEMORY.md` reflects the final post-extension state instead of a stale pre-extension snapshot
-- create `MEMORY.md` if missing, using this structure:
+#### Documentation sync
+
+1. Review the diff in each repo touched during the session.
+2. If the change affects project-maintained docs such as README, changelog, setup guides, runbooks, or verification docs, update only the documents directly affected.
+3. If no project-maintained docs were directly affected, skip this step.
+
+#### Commit
+
+1. Run `git status` in each repo touched during the session.
+2. If uncommitted changes exist, use the repo's normal commit path.
+3. If no `/commit` skill exists, use normal git commands directly.
+4. If the working directory is not inside a git repository, skip commit with `n/a`.
+
+#### File placement check
+
+1. If files were created or saved during the session, verify that obvious naming and placement rules were followed.
+2. Auto-fix only obvious violations:
+   - document-type files created at repo root or code directories that clearly belong in docs
+   - files that clearly violate an existing documented convention
+3. If file placement conventions are not documented, avoid speculative renames or moves.
+
+#### Deploy
+
+1. Check whether the project has a documented deploy script or deploy skill.
+2. If one exists, run it.
+3. If none exists, skip deploy without asking for a manual deploy path.
+
+#### Task cleanup
+
+1. Check the repo's task surface if one exists.
+2. Mark completed tasks done and flag stale or orphaned ones.
+3. If no task file or documented task surface exists, skip task cleanup and report that no project task surface was found.
+
+### Phase 2: `Remember It`
+
+#### Always do first
+
+Update `~/.codex/projects/<slug>/memory/MEMORY.md` with:
+
+- `## Current State`
+- `**Last updated:**`
+- `**Session:**`
+- `**Next steps:**`
+- `## Key Notes`
+
+Keep `Current State` to a short 2-5 line snapshot and `Next steps` to a short numbered list.
+
+Create `MEMORY.md` if missing using this structure:
 
 ```md
 # <Project Name> Memory
@@ -126,18 +148,113 @@ When updating `MEMORY.md`:
 - [user_*.md](...) — stable user/project preferences when justified
 ```
 
-## Session Number Source of Truth
-
-The project memory file is the source of truth for the session number.
+#### Session number source of truth
 
 - preferred source of truth: `~/.codex/projects/<slug>/memory/MEMORY.md`
 - fallback: scan matching diary files for the same project and date only when `MEMORY.md` is missing or uninitialized
 - `wrap-up` must set or confirm the session number in `MEMORY.md` before triggering `diary`
 - when `wrap-up` invokes `diary`, both steps must use the same session number instead of incrementing independently
 
+#### Optional personal extension
+
+Check whether `~/.codex/skills/wrap-up/personal.md` exists.
+
+- if present, follow it as a machine-local instruction file under normal Codex approval and safety rules
+- it is an extension point, not an override mechanism
+- if absent, continue silently
+- if unclear, blocked, or not approved, report that briefly and continue
+
+If the personal-extension pass materially changes tracked project state, reconcile `MEMORY.md` so it reflects the final post-extension state.
+
+#### Claude-to-Codex destination mapping
+
+Use this mapping when deciding where learned material belongs:
+
+- stable project facts -> `project_*.md`
+- repeated project lessons or guardrails -> `feedback_*.md`
+- supporting lookup material -> `reference_*.md`
+- stable recurring user preferences -> `user_*.md`
+- repo-wide operating rules -> repo `AGENTS.md`
+- cross-project Codex behavior rules -> `~/.codex/AGENTS.md`
+- reusable procedural workflows -> skill candidate
+- current-session state only -> `MEMORY.md`
+
+#### Approval matrix for this phase
+
+- auto-apply:
+  - `MEMORY.md` current-state update
+  - repo docs directly affected by session work
+  - commit creation when uncommitted changes exist
+  - deploy when a documented deploy path exists
+  - repo-owned task cleanup
+- require approval:
+  - new or edited typed note under `~/.codex/projects/<slug>/memory/`
+  - repo `AGENTS.md` edits
+  - `~/.codex/AGENTS.md` edits
+  - new skill or skill-spec creation
+- always ask explicitly:
+  - push to remote
+
+`wrap-up` may surface typed-note, repo-`AGENTS.md`, global-`AGENTS.md`, or skill candidates, but it must not create or edit them automatically without approval.
+
+### Phase 3: `Review & Apply`
+
+Analyze the current session for self-improvement findings.
+
+Only say `Nothing to improve` when the session was genuinely short or purely informational.
+
+Finding categories:
+
+- `Skill gap`
+- `Friction`
+- `Knowledge`
+- `Automation`
+
+Action types:
+
+- repo doc update
+- typed note candidate
+- repo `AGENTS.md` candidate
+- global `~/.codex/AGENTS.md` candidate
+- skill candidate
+- no action needed
+
+Rules:
+
+- prioritize repeated violation of an existing rule over inventing a new rule
+- strengthen existing guidance before proposing a parallel duplicate
+- auto-apply only actions allowed by the approval matrix
+- present approval-gated items as targeted proposals with destination and rationale
+
+Present findings in two sections:
+
+- `Findings (applied)`
+- `No action needed`
+
+### Phase 4: `Diary Capture`
+
+After Phases 1-3 are complete, always invoke the installed sibling skill at `../diary/SKILL.md`.
+
+Rules:
+
+- this step always runs
+- `wrap-up` must not fold reflection logic into the diary step
+- `diary` still runs when the personal extension is absent
+- `diary` still runs when approval-gated durable changes were declined
+- `diary` still runs when some wrap-up steps were skipped with documented fallback status
+
+### Final Step: Push
+
+After the four phases are complete, ask:
+
+`Push to remote? (y/n)`
+
+- if yes, push committed changes
+- if no or no response, skip
+
 ## Typed Note Policy
 
-When `wrap-up` surfaces a durable-learning candidate, use the typed memory policy in [`docs/typed-memory-notes.md`](../../docs/typed-memory-notes.md) to decide whether a typed note is warranted.
+When a durable-learning candidate belongs in project memory, use [`docs/typed-memory-notes.md`](../../docs/typed-memory-notes.md):
 
 - `project_*.md`: stable project facts, invariants, storage layout, architecture, or repo-specific conventions
 - `feedback_*.md`: repeated lessons or guardrails that future work in this project should follow
@@ -151,83 +268,33 @@ Avoid proposing a new typed note when:
 - an existing typed note can be strengthened instead
 - repo docs, `AGENTS.md`, or a skill would be the clearer long-term owner
 
-`wrap-up` may mention a typed note candidate, but it must not create the note automatically.
+## Missing-Surface Fallback Rules
 
-## Promotion Reporting Levels
-
-When reporting durable follow-ups, keep the recommendation at the right level:
-
-- mention candidate only: the signal is worth noting but does not yet justify a durable edit
-- propose creating a typed note: the evidence fits project memory and the note type is clear
-- propose editing repo docs: the learning belongs in repository documentation that already owns the subject
-- propose editing `AGENTS.md`: the learning is a repeated operating rule for repo-level or global agent behavior
-
-All four are proposals only. `wrap-up` does not apply durable edits automatically.
-
-## What To Summarize
-
-The wrap-up summary should cover:
-
-- completed work
-- verification performed
-- open risks or unresolved questions
-- durable-learning candidates worth considering later
-
-## Diary Trigger
-
-`wrap-up` must always invoke `diary` after the project memory update succeeds.
-
-- `diary` may also run standalone
-- the diary entry should use current conversation context first
-- `wrap-up` must not fold reflection or promotion logic into the diary step
-- after the memory update, any optional personal-extension pass, and any required memory reconciliation, open and follow the installed sibling skill at `../diary/SKILL.md`
-- `diary` still runs when the personal extension is absent
-- `diary` still runs when the personal extension is only partially completed because its instructions were unclear, blocked, or not approved
-
-## Personal Extension Guardrails
-
-When `wrap-up` encounters `~/.codex/skills/wrap-up/personal.md`:
-
-- treat it as a machine-local instruction file, not a shell script or repository skill
-- do not let it override the core `wrap-up` contract or safety boundaries
-- keep normal approval rules in force for any action it requests
-- only edit the file, entry, fields, or sections named by the instruction
-- do not modify unrelated headers, summaries, or metadata unless the instruction explicitly says to
-- when an instruction constrains a field to exact values or formats, use one of those exact values; if the correct value cannot be chosen without guessing, report that step as incomplete and continue
-- never write to `~/.claude/**`
-- never create repo-local runtime memory
-- never edit repo files unless the user explicitly requested that in the session
-- never auto-commit, auto-push, auto-deploy, auto-rename, auto-move, or do destructive cleanup unless the user explicitly requested it in the session
-
-## What Must Never Happen Automatically
-
-- writing runtime memory into the working repository
-- writing anything under `~/.claude/`
-- creating or editing repo `AGENTS.md`, global `~/.codex/AGENTS.md`, or new skills without approval
-- editing repo files unless the user explicitly requested that in the session
-- creating new durable typed notes as a side effect of wrap-up unless the user explicitly approves that promotion
-- commit, push, deploy, rename, move, or destructive cleanup
+- if no `/commit` skill exists, use normal git commands directly
+- if the working directory is not a git repository, skip commit and push with `n/a`
+- if no documented deploy script or deploy skill exists, skip deploy without asking for a manual deploy
+- if no repo task file or documented task surface exists, skip task cleanup and state that no project task surface was found
+- if file placement conventions are not documented, only correct obvious misplaced document files and avoid speculative renames or moves
+- if a required approval is denied, report the skipped step and continue the remaining phases
 
 ## Final Report
 
 End with a concise report that states:
 
-- what was captured in project memory
+- what was shipped or explicitly skipped
+- what was captured in `MEMORY.md`
 - whether the optional personal extension ran, was absent, or stopped short
 - that `diary` was run
 - any open risks
-- any durable promotion candidates that need approval
+- any approval-gated durable candidates that remain
 
 ## Verification Checklist
 
 Before treating this skill spec as correct, verify that:
 
-- the execution order is inspect session -> update project memory -> check optional personal extension -> reconcile project memory if needed -> trigger `diary` -> report promotions
-- the execution order includes a memory reconciliation pass when the personal extension materially changes tracked state
-- the safety boundaries forbid repo-local memory, `.claude` writes, auto shipping actions, and automatic durable instruction changes
-- the optional personal extension path and its separation from installed runtime skills are explicit
-- the optional personal extension cannot skip `diary` or weaken approval rules
-- the optional personal extension stays within its named edit scope and does not invent alternative exact field values
-- the memory update guidance includes the inline `MEMORY.md` structure and the shared path-to-slug transform
-- the typed note policy covers `feedback_*.md`, `project_*.md`, `reference_*.md`, and `user_*.md`
-- the session number source of truth and fallback are explicit
+- the high-level phase structure is `Ship It` -> `Remember It` -> `Review & Apply` -> `Diary Capture` -> push confirmation
+- runtime storage paths point only to `~/.codex/...` and `~/.agents/skills/...`
+- the destination mapping matches the parity design
+- the approval matrix and fallback rules are explicit
+- `diary` cannot be skipped by a missing personal extension or declined durable edits
+- the session-number source of truth is `MEMORY.md` with diary fallback only when needed

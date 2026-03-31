@@ -33,6 +33,21 @@ check_dir() {
   fi
 }
 
+check_owned_dir() {
+  local path="$1"
+  local label="$2"
+
+  if [[ -L "$path" ]]; then
+    printf '[fail] %s is a symlink, expected a real Codex-owned directory: %s\n' "$label" "$path" >&2
+    status=1
+  elif [[ -d "$path" ]]; then
+    printf '[ok] %s: %s\n' "$label" "$path"
+  else
+    printf '[fail] %s missing: %s\n' "$label" "$path" >&2
+    status=1
+  fi
+}
+
 check_skill_sync() {
   local skill_name="$1"
   local src="$SKILLS_SRC_DIR/$skill_name/SKILL.md"
@@ -56,10 +71,19 @@ check_skill_sync "wrap-up"
 check_skill_sync "diary"
 check_skill_sync "reflect"
 
-check_dir "$CODEX_ROOT_DIR/skills/wrap-up" "personal wrap-up directory"
-check_dir "$CODEX_ROOT_DIR/memory/diary" "diary directory"
+check_owned_dir "$CODEX_ROOT_DIR/skills/wrap-up" "personal wrap-up directory"
+check_owned_dir "$CODEX_ROOT_DIR/memory/diary" "diary directory"
+check_owned_dir "$CODEX_ROOT_DIR/memory/reflections" "reflections directory"
 check_file "$CODEX_ROOT_DIR/memory/reflections/processed.log" "processed.log"
-check_dir "$CODEX_ROOT_DIR/projects" "projects directory"
+check_owned_dir "$CODEX_ROOT_DIR/projects" "projects directory"
+
+if find "$CODEX_ROOT_DIR/projects" -type l -path '*/memory' -print -quit | grep -q .; then
+  printf '[fail] symlinked project memory directories remain under %s\n' "$CODEX_ROOT_DIR/projects" >&2
+  find "$CODEX_ROOT_DIR/projects" -type l -path '*/memory' -print >&2 || true
+  status=1
+else
+  printf '[ok] no symlinked project memory directories remain under %s\n' "$CODEX_ROOT_DIR/projects"
+fi
 
 if [[ -f "$CODEX_ROOT_DIR/skills/wrap-up/personal.md" ]]; then
   printf '[ok] optional personal extension present: %s\n' "$CODEX_ROOT_DIR/skills/wrap-up/personal.md"

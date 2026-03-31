@@ -4,12 +4,13 @@
 
 ## Goal
 
-Create a Codex-native layered learning system that produces the same outcome as Claude Layered Learning:
+Create a Codex-native layered learning system that mirrors Claude Layered Learning's workflow and information model while keeping Codex storage and runtime ownership independent:
 
 - retain useful project knowledge across sessions
 - capture raw session history while context is fresh
 - reflect on repeated patterns over time
 - promote stable learnings into durable guidance only when justified
+- restore Claude-equivalent closeout phases in `wrap-up`
 
 The design must not disturb Claude Code and must not create repo-local runtime memory directories in working repositories.
 
@@ -28,7 +29,8 @@ The design must not disturb Claude Code and must not create repo-local runtime m
 - It does not read from or write to `~/.claude/**`
 - It does not install Claude hooks, commands, or skills
 - It does not create repo-local memory folders
-- It does not auto-commit, auto-push, auto-deploy, or perform destructive cleanup
+- It does not auto-push
+- It does not perform speculative or destructive cleanup
 - It does not mutate durable guidance without user approval
 
 All Claude-compatible functionality continues to live in `Claude-Layered-Learning`.
@@ -41,9 +43,11 @@ Codex Layered Learning uses a two-loop architecture.
 
 The immediate loop runs at session close:
 
-1. `wrap-up` inspects the current session
-2. `wrap-up` updates project-scoped memory
-3. `wrap-up` automatically invokes `diary`
+1. `wrap-up` runs `Ship It`
+2. `wrap-up` runs `Remember It`
+3. `wrap-up` runs `Review & Apply`
+4. `wrap-up` runs `Diary Capture`
+5. `wrap-up` asks whether to push
 
 This loop is responsible for preserving fresh session context before it is lost.
 
@@ -120,20 +124,26 @@ Behavior:
 - Determine the current project slug from the canonical project root path, not only the working-directory basename
 - Inspect current session context first
 - Optionally inspect repo state for changed files and verification evidence
-- Summarize:
-  - completed work
-  - verification performed
-  - open risks
-  - durable-learning candidates
+- run `Ship It`:
+  - documentation sync when directly affected
+  - commit flow when uncommitted changes exist
+  - obvious file placement fixes
+  - deploy when a documented deploy path exists
+  - task cleanup when a documented task surface exists
 - Update `~/.codex/projects/<slug>/memory/MEMORY.md`
+- optionally follow `~/.codex/skills/wrap-up/personal.md`
+- reconcile `MEMORY.md` if the personal-extension step materially changed tracked state
+- route durable candidates using the Codex destination mapping
+- run `Review & Apply` with approval-gated durable edits
 - Automatically trigger `diary`
-- Offer optional follow-ups, but do not perform durable edits without approval
+- ask whether to push after the four phases complete
 
 Hard constraints:
 
-- No commit, push, deploy, or destructive cleanup by default
+- No writes under `~/.claude/**`
 - No repo-local memory writes
-- No automatic durable instruction changes
+- No automatic durable instruction changes without approval
+- No automatic push
 
 ### `diary`
 
@@ -147,11 +157,14 @@ Behavior:
 - Write a structured diary entry to `~/.codex/memory/diary/`
 - Capture:
   - task summary
+  - time
   - work summary
   - design decisions
   - actions taken
   - challenges and solutions
   - user preferences observed
+  - code patterns and decisions
+  - context and technologies
   - verification performed
   - notes / next-step context
 
@@ -177,8 +190,11 @@ Behavior:
   - prior reflections
   - `processed.log`
   - project `MEMORY.md`
+  - project typed notes when project-memory promotion is being considered
+  - repo docs and repo `AGENTS.md` when repo-level promotion is being considered
   - existing global `AGENTS.md` when considering global promotions
 - Group repeated learnings
+- Prioritize repeated rule violations over inventing new rules
 - Apply scope and confidence rules
 - Write a reflection file to `~/.codex/memory/reflections/`
 - Update `processed.log` only after the user accepts the reflection pass as complete or explicitly asks to mark the analyzed entries as processed
@@ -232,6 +248,22 @@ Scope is only the first routing decision. The final destination depends on what 
 ### Approval Model
 
 No durable edit is automatic.
+
+`wrap-up` may auto-apply only:
+
+- `MEMORY.md` current-state updates
+- directly affected repo docs
+- commit creation when uncommitted changes exist
+- deploy when a documented deploy path exists
+- repo-owned task cleanup
+
+`wrap-up` and `reflect` both require approval for:
+
+- repo `AGENTS.md` edits
+- global `~/.codex/AGENTS.md` edits
+- project typed note creation or edits
+- skill candidate creation
+- repo doc edits not already covered by directly affected session-close doc sync
 
 `reflect` should always show:
 

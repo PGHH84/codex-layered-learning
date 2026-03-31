@@ -10,39 +10,48 @@ description: Use when the user asks to review Codex diary entries over time, syn
 This skill is the runtime source of truth for `reflect`.
 
 - `commands/reflect.md` is a reference-only summary
-- Behavioral changes must land here first and then be synchronized into installed copies under `~/.agents/skills/`
+- behavioral changes must land here first and then be synchronized into installed copies under `~/.agents/skills/`
 
 ## Purpose
 
-`reflect` is the deferred synthesis loop for Codex Layered Learning. It reads diary entries and supporting memory, identifies repeated patterns, routes them by scope, and proposes durable promotions without applying them automatically.
+`reflect` is the deferred synthesis loop for Codex Layered Learning.
+
+- it reads Codex diary entries and supporting memory
+- it identifies repeated patterns, rule violations, contradictions, and one-off observations
+- it routes durable learnings to Codex-owned or repo-owned destinations
+- it proposes durable promotions without applying them automatically
 
 `reflect` runs separately from `wrap-up`.
 
 ## Safety Boundaries
 
-- Never create repo-local runtime memory folders in working repositories
-- Never auto-apply edits to instruction files, repo docs, project memory notes, or skills
-- Keep markdown as the source of truth in v1
+- never create repo-local runtime memory folders in working repositories
+- never auto-apply edits to repo `AGENTS.md`, `~/.codex/AGENTS.md`, repo docs, project typed notes, or skills
+- never read from or write to `~/.claude/**`
+- keep markdown as the source of truth in this pass
 
 ## Runtime Paths
 
-- Central diary: `~/.agents/memory/diary/` (shared — written by both Claude Code and Codex)
-- Central reflections: `~/.agents/memory/reflections/`
-- Processed index: `~/.agents/memory/reflections/processed.log`
-- Project memory: `~/.codex/projects/<slug>/memory/` (symlinked → `~/.claude/projects/<slug>/memory/`)
-- Global durable guidance candidates: `~/.codex/AGENTS.md` AND `~/.claude/CLAUDE.md`
+- diary input: `~/.codex/memory/diary/`
+- reflections: `~/.codex/memory/reflections/`
+- processed index: `~/.codex/memory/reflections/processed.log`
+- project memory: `~/.codex/projects/<slug>/memory/`
+- global durable guidance candidate: `~/.codex/AGENTS.md`
 
 ## Promotion Model
 
-Reflect always promotes to **both agents** — no agent-specific rules.
+Reflect routes candidates to the nearest Codex-owned equivalent of Claude's durable targets.
 
 | Scope | Target |
-|-------|--------|
-| Global (cross-project) | `~/.claude/CLAUDE.md` AND `~/.codex/AGENTS.md` |
-| Project (triumvirate — `SKILL.md` exists) | `[project]/SKILL.md` only (CLAUDE.md @imports it; AGENTS.md mirrors it) |
-| Project (non-triumvirate) | `[project]/CLAUDE.md` AND `[project]/AGENTS.md` |
+|---|---|
+| Global, cross-project Codex behavior | `~/.codex/AGENTS.md` |
+| Repo-wide operating guidance | repo `AGENTS.md` |
+| Existing project-owned documentation | repo docs |
+| Project durable memory | typed notes under `~/.codex/projects/<slug>/memory/` |
+| Reusable procedural workflow | skill candidate |
+| Too weak or one-off | no durable promotion |
 
-Before promoting, check if `[project]/SKILL.md` exists to determine the project target.
+Before proposing any promotion, inspect the current destination if it exists and prefer strengthening existing guidance over creating a parallel duplicate.
 
 ## Path-To-Slug Transform
 
@@ -57,7 +66,7 @@ Use this exact transform so `reflect`, `wrap-up`, and `diary` agree on project i
 
 Primary corpus:
 
-- centralized diary entries from `~/.agents/memory/diary/`
+- diary entries from `~/.codex/memory/diary/`
 
 Supported filters:
 
@@ -69,37 +78,38 @@ Supported filters:
 
 Supporting context:
 
-- prior reflections from `~/.agents/memory/reflections/`
-- `~/.agents/memory/reflections/processed.log`
+- prior reflections from `~/.codex/memory/reflections/`
+- `~/.codex/memory/reflections/processed.log`
 - project `~/.codex/projects/<slug>/memory/MEMORY.md` when project context is relevant
 - existing typed project memory notes under `~/.codex/projects/<slug>/memory/` when project-memory promotion candidates are being considered
-- repo `AGENTS.md`, repo `SKILL.md`, and relevant repo docs when repo-level promotion candidates are being considered
-- global `~/.codex/AGENTS.md` AND `~/.claude/CLAUDE.md` when evaluating global promotion candidates
+- repo `AGENTS.md` and relevant repo docs when repo-level promotion candidates are being considered
+- global `~/.codex/AGENTS.md` when evaluating global promotion candidates
 
 ## Processing Workflow
 
 1. Resolve the filter set and project slug mapping using the shared path-derived slug rule.
-2. Load matching diary entries from `~/.agents/memory/diary/`.
+2. Load matching diary entries from `~/.codex/memory/diary/`.
 3. Skip entries already listed in `processed.log` unless the user explicitly requests reprocessing.
-4. Read supporting context that is relevant to the filtered corpus, including recent reflections and the current contents of plausible promotion targets (both agents).
+4. Read supporting context relevant to the filtered corpus, including recent reflections and the current contents of plausible promotion targets.
 5. Group repeated patterns, explicit rule violations, contradictions, and one-off observations.
 6. Carry forward recent one-off observations from prior reflections when the same signal reappears.
-7. Route each repeated learning by scope and destination using the Promotion Model, strengthening weak existing guidance before proposing a brand-new durable note.
-8. Write the reflection file to `~/.agents/memory/reflections/YYYY-MM-DD-reflection-N.md`.
-9. Update `processed.log` only after the user accepts the reflection pass as complete or explicitly asks to mark the analyzed diary entries as processed.
+7. Prioritize repeated violation of existing guidance over inventing a new rule.
+8. Route each repeated learning by scope and destination, strengthening weak existing guidance before proposing a brand-new durable note.
+9. Write the reflection file to `~/.codex/memory/reflections/YYYY-MM-DD-reflection-N.md`.
+10. Update `processed.log` only after the user accepts the reflection pass as complete or explicitly asks to mark the analyzed diary entries as processed.
 
 ## Carry-Forward Rule
 
-- Read recent `One-Off Observations` before scoring new patterns
-- If a current signal matches a recent one-off observation, count that prior occurrence toward the current confidence threshold
-- Use carry-forward only for clearly similar signals
-- Note the carry-forward when it materially affects confidence
+- read recent `One-Off Observations` before scoring new patterns
+- if a current signal matches a recent one-off observation, count that prior occurrence toward the current confidence threshold
+- use carry-forward only for clearly similar signals
+- note the carry-forward when it materially affects confidence
 
 ## Rule Violation Priority
 
-- Check whether diary entries show the agent violating an existing global rule, repo rule, or project-memory lesson
-- Repeated violation of an existing rule is higher priority than inventing a new rule
-- If patterns are contradictory, surface the contradiction instead of forcing a confident promotion
+- check whether diary entries show the agent violating an existing global rule, repo rule, or project-memory lesson
+- repeated violation of an existing rule is higher priority than inventing a new rule
+- if patterns are contradictory, surface the contradiction instead of forcing a confident promotion
 
 ## Scope Routing
 
@@ -107,15 +117,15 @@ Use deterministic routing first and model judgment only for edge cases.
 
 ### Project-Specific Signals
 
-- Mentions repo-specific paths, commands, services, architecture, or quirks
-- Appears only inside one project corpus
-- Would look out of place in unrelated projects
+- mentions repo-specific paths, commands, services, architecture, or quirks
+- appears only inside one project corpus
+- would look out of place in unrelated projects
 
 ### Global Signals
 
-- Applies to Codex behavior across repositories
-- Repeats across multiple projects or sessions
-- Reads like a general operating principle
+- applies to Codex behavior across repositories
+- repeats across multiple projects or sessions
+- reads like a general operating principle
 
 ### Technology-Specific Signals
 
@@ -128,7 +138,7 @@ Use deterministic routing first and model judgment only for edge cases.
 - 1 occurrence: keep as a one-off observation only
 - 2 occurrences in one project: project candidate
 - 3 or more occurrences, or repetition across projects: global candidate
-- Repeated violation of an existing rule raises promotion priority
+- repeated violation of an existing rule raises promotion priority
 
 ## Signal vs Noise
 
@@ -148,20 +158,9 @@ Noise examples:
 - an abandoned idea that appears once and never returns
 - a transient preference that does not materially affect future execution
 
-## Candidate Destinations
-
-- Project typed note under `~/.codex/projects/<slug>/memory/`
-- Existing repo docs
-- Repo `AGENTS.md`
-- Global `~/.codex/AGENTS.md`
-- New skill
-- No durable promotion
-
-Prefer existing docs over new files when they already own the subject.
-
 ## Typed Note Policy
 
-When the chosen destination is project memory, use the typed memory policy in [`docs/typed-memory-notes.md`](../../docs/typed-memory-notes.md) to choose the note type:
+When the chosen destination is project memory, use [`docs/typed-memory-notes.md`](../../docs/typed-memory-notes.md) to choose the note type:
 
 - `project_*.md`: stable project facts, architecture, invariants, storage layout, or repo-specific conventions
 - `feedback_*.md`: repeated project lessons, anti-patterns, or guardrails justified by recurring evidence
@@ -175,18 +174,21 @@ Avoid creating a new typed note when:
 - repo docs, `AGENTS.md`, or a skill is the clearer durable destination
 - the content is temporary task state rather than durable memory
 
-## Destination Checks
-
-Before proposing any promotion:
-
-- Inspect the relevant destination if it already exists
-- Skip a semantic duplicate even when the wording differs
-- Prefer strengthening existing guidance over adding a parallel duplicate
-- Flag any conflict between candidate guidance and existing guidance for user review instead of auto-resolving it
-
 ## Approval Model
 
-No durable edit is automatic. Every proposed promotion must include:
+No durable edit is automatic.
+
+- auto-write:
+  - reflection markdown file
+- require approval:
+  - repo `AGENTS.md` edits
+  - `~/.codex/AGENTS.md` edits
+  - repo doc edits
+  - project typed note creation or edits
+  - skill candidate creation
+- update `processed.log` only after the user accepts the reflection pass as complete
+
+Every proposed promotion must include:
 
 - the proposed learning
 - supporting evidence
@@ -194,16 +196,21 @@ No durable edit is automatic. Every proposed promotion must include:
 - proposed destination
 - the reason for project-specific or global scope
 
-## `processed.log` Behavior
+## `processed.log` Semantics
 
-- Store processed diary entry identifiers in `~/.codex/memory/reflections/processed.log`
-- Canonical line format: `<diary-filename> | <processed-date> | <reflection-filename> | accepted`
-- Only add identifiers after the user accepts the reflection pass as complete or explicitly asks to mark entries as processed
-- Default behavior is to skip diary entries already listed there
-- `include all entries` means analyze both processed and unprocessed entries for the selected scope without deleting prior reflections
-- targeted `reprocess` means analyze a named entry or filtered subset again when the user explicitly asks
-- If the user explicitly requests reprocessing, allow already-processed entries back into the analysis set
-- Reprocessing does not require deleting old reflections
+- store processed diary entry identifiers in `~/.codex/memory/reflections/processed.log`
+- canonical line format: `<diary-filename> | <processed-date> | <reflection-filename> | accepted`
+- acceptance of the reflection pass advances `processed.log`
+- approval of durable edits is separate from reflection acceptance
+- declining all durable edits does not block `processed.log` advancement if the user still accepts the reflection as complete
+- `include all entries` analyzes both processed and unprocessed entries for the selected scope without deleting prior reflections
+- targeted `reprocess` analyzes a named entry or filtered subset again when the user explicitly asks
+
+## Missing-Surface Fallback Rules
+
+- if no diary entries exist, suggest running `diary` or `wrap-up` first
+- if all entries are already processed, suggest `include all entries`
+- if a target destination does not exist, propose the change without creating the destination automatically unless approved
 
 ## Exact Template
 
@@ -271,8 +278,8 @@ Before treating this skill as correct, verify that:
 
 - filters cover unprocessed, last `N`, date range, project slug, and keyword
 - the path-to-slug transform is explicit and shared with `wrap-up` and `diary`
-- `processed.log` is approval-gated, not automatically advanced
-- routing, confidence, and destination rules remain consistent with the Codex Layered Learning design
+- all runtime paths are Codex-native
+- `processed.log` advancement depends on reflection acceptance, not durable-edit approval
+- routing, confidence, approval, and destination rules remain consistent with the parity design
 - destination checks include semantic duplicate review and conflict handling
 - the typed note policy covers `feedback_*.md`, `project_*.md`, `reference_*.md`, and `user_*.md`
-- technology routing, signal vs noise guidance, and reprocess modes are explicit

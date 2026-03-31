@@ -42,6 +42,10 @@ The installer is idempotent. It:
   - `~/.codex/projects/`
 - creates `~/.codex/memory/reflections/processed.log` if missing
 
+The installer does not create project `MEMORY.md` files or any typed project notes up front. Those are created by runtime behavior when `wrap-up`, `diary`, or approved durable promotions need them.
+
+If the installer finds legacy shared-runtime symlinks from older Codex experiments, it normalizes them into real `~/.codex` directories while preserving their current contents.
+
 ### 3. Verify the install
 
 ```bash
@@ -55,6 +59,7 @@ Verification checks:
 - installed copies match the repo
 - required `~/.codex/` runtime directories exist
 - `processed.log` exists
+- documented `~/.codex/` runtime directories are real Codex-owned directories, not legacy symlinks
 - `~/.codex/skills/wrap-up/personal.md` is treated as optional
 
 ## Using The Skills
@@ -68,6 +73,12 @@ The runtime source of truth lives in:
 If your Codex environment auto-discovers installed skills under `~/.agents/skills/`, use them normally there.
 
 If your CLI or API-driven setup does not auto-discover them, use the installed copies or the repo `SKILL.md` files directly as local instructions. The architecture and output locations stay the same.
+
+Behavior overview:
+
+- `wrap-up` runs `Ship It`, `Remember It`, `Review & Apply`, and `Diary Capture`, then asks whether to push
+- `diary` captures a richer structured session record under `~/.codex/memory/diary/`
+- `reflect` writes a reflection file under `~/.codex/memory/reflections/` and only advances `processed.log` after the reflection pass is accepted
 
 ## Optional Personal Wrap-Up Extension
 

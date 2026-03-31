@@ -1,6 +1,6 @@
 # Codex Layered Learning
 
-A file-first layered learning system for Codex and OpenAI coding runtimes. It preserves session context, keeps durable project knowledge under `~/.codex/`, and proposes reusable improvements over time without auto-applying them.
+A file-first layered learning system for Codex and OpenAI coding runtimes. It preserves session context, keeps durable project knowledge under `~/.codex/`, restores Claude-equivalent session-close workflow phases, and keeps Codex runtime storage independent from Claude.
 
 ## Who It Is For
 
@@ -27,21 +27,32 @@ Claude-compatible functionality remains in the separate Claude Layered Learning 
 
 The system has two learning loops:
 
-**Immediate loop:** `wrap-up` inspects the current session, updates project memory, optionally follows `~/.codex/skills/wrap-up/personal.md`, reconciles final state if needed, and always triggers `diary`.
+**Immediate loop:** `wrap-up` runs `Ship It`, `Remember It`, `Review & Apply`, and `Diary Capture`, then asks whether to push.
 
-**Deferred loop:** `reflect` analyzes accumulated diary entries, prior reflections, and project memory to identify repeated patterns and propose durable promotions.
+**Deferred loop:** `reflect` analyzes accumulated diary entries, prior reflections, and project memory to identify repeated patterns and propose durable promotions to Codex-owned or repo-owned destinations.
 
 ```text
 Session work
     |
     v
 wrap-up (immediate loop)
-    |-- inspect current session
-    |-- update project MEMORY.md
-    |-- optionally follow personal.md
-    |-- reconcile final project state
-    |-- trigger diary
-    |-- report promotion candidates only
+    |-- Ship It
+    |   |-- doc sync when directly affected
+    |   |-- commit when needed
+    |   |-- obvious file placement fixes
+    |   |-- deploy if documented
+    |   |-- task cleanup if a task surface exists
+    |-- Remember It
+    |   |-- update project MEMORY.md
+    |   |-- optionally follow personal.md
+    |   |-- reconcile final project state
+    |   |-- route durable candidates to the right Codex destination
+    |-- Review & Apply
+    |   |-- apply only actions allowed by the approval matrix
+    |   |-- present approval-gated durable proposals
+    |-- Diary Capture
+    |   |-- trigger diary
+    |-- ask whether to push
     |
     v
 diary (observation layer)
@@ -53,7 +64,8 @@ diary (observation layer)
 reflect (pattern layer)
     |-- cross-session analysis
     |-- routing by project/global scope
-    |-- proposal-only durable promotions
+    |-- reflection file auto-written
+    |-- durable promotions proposed, never auto-applied
     |-- saved to ~/.codex/memory/reflections/
 ```
 
@@ -64,9 +76,12 @@ reflect (pattern layer)
 | Project `MEMORY.md` | Yes | Reads only |
 | Central diary | Triggers `diary` | Reads |
 | Central reflections | No | Yes |
-| Project typed notes | Proposal only | Proposal only |
-| Repo docs / repo `AGENTS.md` | No automatic edits | Proposal only, approval-gated |
-| Global `~/.codex/AGENTS.md` | No automatic edits | Proposal only, approval-gated |
+| Project typed notes | Approval-gated | Approval-gated |
+| Repo docs | Directly affected docs may be auto-updated | Approval-gated |
+| Repo `AGENTS.md` | Approval-gated | Approval-gated |
+| Global `~/.codex/AGENTS.md` | Approval-gated | Approval-gated |
+| Commit / deploy / task cleanup | Auto-run when the documented conditions exist | No |
+| Push to remote | Always ask explicitly | No |
 | `~/.codex/skills/wrap-up/personal.md` | Optional machine-local extension | No |
 
 ## Runtime Authority
@@ -132,7 +147,7 @@ Core rules:
 - diary entries are centralized under `~/.codex/memory/diary/`
 - reflections are centralized under `~/.codex/memory/reflections/`
 - `processed.log` uses the canonical accepted-entry format: `<diary-filename> | <processed-date> | <reflection-filename> | accepted`
-- typed project memory notes use the `feedback_*.md`, `project_*.md`, `reference_*.md`, and `user_*.md` taxonomy described in [`docs/typed-memory-notes.md`](typed-memory-notes.md)
+- typed project memory notes use the `feedback_*.md`, `project_*.md`, `reference_*.md`, and `user_*.md` taxonomy described in [`docs/typed-memory-notes.md`](docs/typed-memory-notes.md)
 - markdown is the source of truth in v1
 - any future database or MCP layer is an index, not the canonical store
 
@@ -193,7 +208,7 @@ This project directly reuses and extends work by others. Huge kudos to:
 - **[PR #3](https://github.com/rlancemartin/claude-diary/pull/3) by [thebenlamm](https://github.com/thebenlamm)** — the global vs project-specific routing framework that informed how `reflect` classifies durable candidates by scope.
 - **[jonathanmalkin/jules](https://github.com/jonathanmalkin/jules)** and his **[Reddit post](https://www.reddit.com/r/ClaudeCode/comments/1r89084/comment/o9sv777/?context=3)** — the original wrap-up skill concept that inspired the immediate loop. The idea of closing a session by shipping, remembering, and reviewing comes from that work.
 
-What this repository adds: a Codex-native runtime layout under `~/.codex/`, skill-first runtime authority, approval-gated durable promotions, project-scoped typed memory notes, install/verification scripts, and a Codex-native machine-local `personal.md` extension surface.
+What this repository adds: a Codex-native runtime layout under `~/.codex/`, skill-first runtime authority, Claude-equivalent wrap-up phase structure, approval-gated durable promotions, project-scoped typed memory notes, install/verification scripts, and a Codex-native machine-local `personal.md` extension surface.
 
 ## Status
 
@@ -203,8 +218,8 @@ See also:
 
 - [INSTALL.md](INSTALL.md)
 - [CHANGELOG.md](CHANGELOG.md)
-- [docs/typed-memory-notes.md](typed-memory-notes.md)
-- [docs/specs/2026-03-20-codex-layered-learning-design.md](2026-03-20-codex-layered-learning-design.md)
+- [docs/typed-memory-notes.md](docs/typed-memory-notes.md)
+- [docs/specs/2026-03-20-codex-layered-learning-design.md](docs/specs/2026-03-20-codex-layered-learning-design.md)
 
 ## License
 
