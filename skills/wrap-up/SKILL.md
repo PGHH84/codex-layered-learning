@@ -223,7 +223,10 @@ Action types:
 Rules:
 
 - prioritize repeated violation of an existing rule over inventing a new rule
+- before editing repo `PROJECT.md` or `~/.agents/global/PROJECT.md`, read the current destination and identify the best existing section for the change
 - strengthen existing guidance before proposing a parallel duplicate
+- when a semantically similar rule already exists, merge with it or tighten it instead of adding a redundant new bullet
+- place each applied rule in the most appropriate existing section instead of appending it arbitrarily
 - auto-apply only actions allowed by the approval matrix
 - present approval-gated items as targeted proposals with destination and rationale
 - do not route project-local operating improvements to repo `AGENTS.md` or repo `CLAUDE.md`

@@ -9,6 +9,11 @@ Format: [Semantic Versioning](https://semver.org/) — `MAJOR.MINOR.PATCH`
 
 ---
 
+## [1.3.1] - 2026-04-01
+
+### Fixed
+- `wrap-up` now explicitly requires reviewing the current local or global `PROJECT.md` destination before applying a rule, placing the change in the appropriate existing section, and tightening semantically similar guidance instead of creating redundant duplicate bullets.
+
 ## [1.3.0] - 2026-03-31
 
 ### Changed
