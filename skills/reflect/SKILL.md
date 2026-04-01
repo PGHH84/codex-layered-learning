@@ -37,7 +37,7 @@ This skill is the runtime source of truth for `reflect`.
 - reflections: `~/.codex/memory/reflections/`
 - processed index: `~/.codex/memory/reflections/processed.log`
 - project memory: `~/.codex/projects/<slug>/memory/`
-- project operating guidance source: repo `PROJECT.md`
+- project operating guidance source: repo `AGENTS.md`
 - global operating guidance source: `~/.agents/global/PROJECT.md`
 - generated global mirrors: `~/.codex/AGENTS.md`, `~/.claude/CLAUDE.md`
 
@@ -48,7 +48,7 @@ Reflect routes candidates to the canonical durable destination for the signal.
 | Scope | Target |
 |---|---|
 | Global, cross-project behavior | `~/.agents/global/PROJECT.md` |
-| Project operating guidance | repo `PROJECT.md` |
+| Project operating guidance | repo `AGENTS.md` |
 | Project durable memory | typed notes under `~/.codex/projects/<slug>/memory/` |
 | Reusable procedural workflow | skill candidate |
 | Too weak or one-off | no durable promotion |
@@ -85,7 +85,7 @@ Supporting context:
 - `~/.codex/memory/reflections/processed.log`
 - project `~/.codex/projects/<slug>/memory/MEMORY.md` when project context is relevant
 - existing typed project memory notes under `~/.codex/projects/<slug>/memory/` when project-memory promotion candidates are being considered
-- repo `PROJECT.md` when project operating-guidance candidates are being considered
+- repo `AGENTS.md` when project operating-guidance candidates are being considered
 - canonical global `~/.agents/global/PROJECT.md` when evaluating global promotion candidates
 
 ## Processing Workflow
@@ -177,7 +177,7 @@ Avoid creating a new typed note when:
 
 - the signal is one-off, weak, or better kept in the reflection only
 - an existing typed note can be strengthened instead
-- repo `PROJECT.md` or a skill is the clearer durable destination
+- repo `AGENTS.md` or a skill is the clearer durable destination
 - the content is temporary task state rather than durable memory
 
 ## Approval Model
@@ -187,7 +187,7 @@ No durable edit is automatic until the user approves it.
 - auto-write:
   - reflection markdown file
 - require approval:
-  - repo `PROJECT.md` edits
+  - repo `AGENTS.md` edits
   - project typed note creation or edits
   - `~/.agents/global/PROJECT.md` edits
   - skill candidate creation
@@ -271,7 +271,7 @@ Every proposed promotion must include:
 ### Global canonical candidates
 - ...
 
-### Project `PROJECT.md` candidates
+### Project `AGENTS.md` candidates
 - ...
 
 ### Project memory candidates

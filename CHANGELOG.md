@@ -20,7 +20,7 @@ Format: [Semantic Versioning](https://semver.org/) — `MAJOR.MINOR.PATCH`
 - Repaired the runtime storage contract so the Codex skills, docs, and verification flows consistently use `~/.codex/` for runtime memory
 - Expanded `diary` to the richer Claude-equivalent capture shape, including `Time`, `Code Quality Preferences`, `Code Patterns and Decisions`, and `Context and Technologies`
 - Clarified `reflect` routing, approval behavior, and `processed.log` advancement so reflection acceptance, approved-edit application, and processed-entry advancement follow one coherent flow
-- Routed project-local operating guidance through repo `PROJECT.md` instead of generated repo mirrors
+- Routed project-local operating guidance through repo `AGENTS.md` instead of generated home-directory mirrors
 - Introduced canonical global operating guidance under `~/.agents/global/PROJECT.md` with generated mirrors at `~/.codex/AGENTS.md` and `~/.claude/CLAUDE.md`
 - Collapsed git worktrees back to the main repo slug so one project does not fragment across worktree-specific memory identities
 
