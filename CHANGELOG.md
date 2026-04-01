@@ -9,7 +9,7 @@ Format: [Semantic Versioning](https://semver.org/) — `MAJOR.MINOR.PATCH`
 
 ---
 
-## [1.2.1] - 2026-03-31
+## [1.3.0] - 2026-03-31
 
 ### Changed
 - Restored Claude-equivalent `wrap-up` phase structure in the Codex runtime:
@@ -29,6 +29,7 @@ Format: [Semantic Versioning](https://semver.org/) — `MAJOR.MINOR.PATCH`
 - Removed contradictory runtime claims of shared or symlinked Codex/Claude memory
 - Aligned README, INSTALL, reference docs, design docs, scripts, and manual verification with the repaired runtime behavior
 - Hardened install verification so legacy symlinked runtime paths are detected instead of silently passing
+- Made the global mirror-sync checker safe to invoke under `zsh` as well as `bash`
 
 ## [1.2.0] - 2026-03-21
 
