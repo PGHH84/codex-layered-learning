@@ -7,7 +7,7 @@ CANONICAL_FILE="${CODEX_GLOBAL_CANONICAL_FILE:-$GLOBAL_ROOT_DIR/PROJECT.md}"
 CODEX_MIRROR_FILE="${CODEX_GLOBAL_CODEX_MIRROR_FILE:-$HOME/.codex/AGENTS.md}"
 CLAUDE_MIRROR_FILE="${CODEX_GLOBAL_CLAUDE_MIRROR_FILE:-$HOME/.claude/CLAUDE.md}"
 
-status=0
+exit_status=0
 
 render_expected() {
   local source_file="$1"
@@ -29,7 +29,7 @@ check_file() {
     printf '[ok] %s: %s\n' "$label" "$path"
   else
     printf '[fail] %s missing: %s\n' "$label" "$path" >&2
-    status=1
+    exit_status=1
   fi
 }
 
@@ -43,7 +43,7 @@ check_rendered_match() {
   else
     printf '[fail] %s differs from canonical source: %s\n' "$label" "$actual_file" >&2
     diff -u "$expected_file" "$actual_file" || true
-    status=1
+    exit_status=1
   fi
 }
 
@@ -58,10 +58,10 @@ if [[ -f "$CANONICAL_FILE" && -f "$CODEX_MIRROR_FILE" && -f "$CLAUDE_MIRROR_FILE
   check_rendered_match "$expected_file" "$CLAUDE_MIRROR_FILE" "Claude global mirror"
 fi
 
-if [[ "$status" -eq 0 ]]; then
+if [[ "$exit_status" -eq 0 ]]; then
   printf 'Global instruction sync check passed.\n'
 else
   printf 'Global instruction sync check failed.\n' >&2
 fi
 
-exit "$status"
+exit "$exit_status"
