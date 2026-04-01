@@ -4,7 +4,7 @@
 
 ## Goal
 
-Create a Codex-native layered learning system that mirrors Claude Layered Learning's workflow and information model while keeping Codex storage and runtime ownership independent:
+Create a Codex-native layered learning system that mirrors Claude Layered Learning's workflow and information model while keeping raw runtime memory Codex-owned and durable guidance aligned through canonical local and global sources:
 
 - retain useful project knowledge across sessions
 - capture raw session history while context is fresh
@@ -17,23 +17,25 @@ The design must not disturb Claude Code and must not create repo-local runtime m
 ## Non-Goals
 
 - Replacing Claude Layered Learning
-- Sharing runtime state with Claude Code
+- Sharing diary or reflection runtime state with Claude Code
 - Using repo-local `Memories/` or similar folders for agent state
 - Automatically editing global or repo instructions without approval
 - Requiring a database or MCP server in v1
 
 ## Safety Boundaries
 
-`Codex-Layered-Learning` is fully isolated from Claude runtime surfaces.
+`Codex-Layered-Learning` keeps raw runtime memory separate while allowing
+explicit global mirror sync for durable operating guidance.
 
-- It does not read from or write to `~/.claude/**`
+- It does not share diary or reflection storage with Claude
 - It does not install Claude hooks, commands, or skills
 - It does not create repo-local memory folders
-- It does not auto-push
 - It does not perform speculative or destructive cleanup
-- It does not mutate durable guidance without user approval
+- It does not mutate global durable guidance without user approval
 
-All Claude-compatible functionality continues to live in `Claude-Layered-Learning`.
+Claude-compatible diary and reflection behavior continues to live in
+`Claude-Layered-Learning`, while global mirror generation is handled through an
+explicit sync path.
 
 ## Architecture
 
@@ -47,7 +49,6 @@ The immediate loop runs at session close:
 2. `wrap-up` runs `Remember It`
 3. `wrap-up` runs `Review & Apply`
 4. `wrap-up` runs `Diary Capture`
-5. `wrap-up` asks whether to push
 
 This loop is responsible for preserving fresh session context before it is lost.
 
@@ -83,6 +84,11 @@ Markdown files are the source of truth in v1.
 ### Runtime Layout
 
 ```text
+~/.agents/
+  global/
+    PROJECT.md
+    sync_global_instructions.sh
+    check_global_instructions_sync.sh
 ~/.codex/
   AGENTS.md
   memory/
@@ -99,6 +105,8 @@ Markdown files are the source of truth in v1.
         project_*.md
         reference_*.md
         user_*.md
+~/.claude/
+  CLAUDE.md
 ```
 
 ### Rationale
@@ -106,8 +114,10 @@ Markdown files are the source of truth in v1.
 - Project memory stays project-specific
 - Diary stays centralized as the raw observation stream
 - Reflections stay centralized as the synthesis layer
+- Repo-local operating guidance converges through repo `PROJECT.md`
+- Global operating guidance converges through canonical `~/.agents/global/PROJECT.md`
 - Project-filtered reflection is driven by metadata inside diary entries, not by diary folder structure
-- Project slugs are derived from canonical project root paths so unrelated projects with the same basename do not collide
+- Project slugs are derived from canonical project root paths and collapse worktrees back to the main repo identity so one project does not fragment across worktrees
 
 This mirrors the current Claude Layered Learning setup while staying Codex-native.
 
@@ -133,17 +143,16 @@ Behavior:
 - Update `~/.codex/projects/<slug>/memory/MEMORY.md`
 - optionally follow `~/.codex/skills/wrap-up/personal.md`
 - reconcile `MEMORY.md` if the personal-extension step materially changed tracked state
-- route durable candidates using the Codex destination mapping
+- route project-local operating guidance to repo `PROJECT.md`
+- route global operating guidance to `~/.agents/global/PROJECT.md`
 - run `Review & Apply` with approval-gated durable edits
 - Automatically trigger `diary`
-- ask whether to push after the four phases complete
 
 Hard constraints:
 
-- No writes under `~/.claude/**`
 - No repo-local memory writes
-- No automatic durable instruction changes without approval
-- No automatic push
+- No automatic global durable instruction changes without approval
+- No direct editing of generated mirror files when canonical sources should be updated instead
 
 ### `diary`
 
@@ -191,14 +200,14 @@ Behavior:
   - `processed.log`
   - project `MEMORY.md`
   - project typed notes when project-memory promotion is being considered
-  - repo docs and repo `AGENTS.md` when repo-level promotion is being considered
-  - existing global `AGENTS.md` when considering global promotions
+  - repo `PROJECT.md` when project operating-guidance promotion is being considered
+  - canonical global `~/.agents/global/PROJECT.md` when considering global promotions
 - Group repeated learnings
 - Prioritize repeated rule violations over inventing new rules
 - Apply scope and confidence rules
 - Write a reflection file to `~/.codex/memory/reflections/`
-- Update `processed.log` only after the user accepts the reflection pass as complete or explicitly asks to mark the analyzed entries as processed
-- Propose durable promotions without applying them automatically
+- Apply approved durable promotions in the same reflection flow
+- Update `processed.log` only after the user accepts the reflection pass as complete and approved actions are resolved
 
 ## Scope Routing
 
@@ -230,9 +239,8 @@ Scope is only the first routing decision. The final destination depends on what 
 ### Candidate Destinations
 
 - Project typed note under `~/.codex/projects/<slug>/memory/`
-- Existing repo docs
-- Repo `AGENTS.md`
-- Global `~/.codex/AGENTS.md`
+- Repo `PROJECT.md`
+- Global `~/.agents/global/PROJECT.md`
 - New skill
 - No durable promotion
 
@@ -241,7 +249,8 @@ Scope is only the first routing decision. The final destination depends on what 
 - One-off observations stay in diary or reflection only
 - Stable project facts go to `project_*.md`
 - Repeated project lessons go to `feedback_*.md`
-- Stable cross-project behavior can become a global `AGENTS.md` candidate
+- Stable project operating guidance belongs in repo `PROJECT.md`
+- Stable cross-project behavior can become a canonical global `PROJECT.md` candidate
 - Reusable workflows and judgment-heavy procedures can become skill candidates
 - Existing docs are preferred over new files when they already own the subject
 
@@ -256,11 +265,13 @@ No durable edit is automatic.
 - commit creation when uncommitted changes exist
 - deploy when a documented deploy path exists
 - repo-owned task cleanup
+- local operating guidance updates to repo `PROJECT.md`
+- clearly memory-scoped project typed-note edits
 
 `wrap-up` and `reflect` both require approval for:
 
-- repo `AGENTS.md` edits
-- global `~/.codex/AGENTS.md` edits
+- repo `PROJECT.md` edits during `reflect`
+- global `~/.agents/global/PROJECT.md` edits
 - project typed note creation or edits
 - skill candidate creation
 - repo doc edits not already covered by directly affected session-close doc sync

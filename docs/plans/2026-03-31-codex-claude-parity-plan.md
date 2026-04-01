@@ -1,160 +1,190 @@
-# Codex Claude Parity Implementation Plan
+# Codex Claude Full Parity Implementation Plan
 
 Parent: [[docs/MOC]]
-Related: [[2026-03-31-codex-claude-parity-design]], [[2026-03-20-codex-layered-learning-design]]
+Related: [[2026-03-31-codex-claude-full-parity-design]], [[2026-03-31-codex-claude-parity-design]], [[2026-03-20-codex-layered-learning-design]]
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Restore Codex Layered Learning to Claude-behavior parity while keeping Codex memory and runtime storage compliant with the current Codex documentation.
+**Goal:** Restore Codex Layered Learning to full Claude-behavior parity by aligning runtime skills, local instruction routing, global durable guidance, and worktree identity with the approved full-parity design.
 
-**Architecture:** Rebuild the Codex runtime around the current documented storage contract: `~/.codex/` for memory and `~/.agents/skills/` for installed skills. Restore Claude-equivalent workflow phases and richer capture/synthesis behavior in the runtime skills, then align all supporting docs, tests, and installer expectations to the same contract.
+**Architecture:** Keep runtime skills installed under `~/.agents/skills/` and project memory under `~/.codex/`, but route project-local operating guidance through repo `PROJECT.md`, route global operating guidance through canonical `~/.agents/global/PROJECT.md`, generate `~/.codex/AGENTS.md` and `~/.claude/CLAUDE.md` from that global source, and collapse git worktrees to one project-memory identity.
 
 **Tech Stack:** Markdown runtime specs, bash install/verify scripts, local skill files, repository docs and manual verification fixtures
 
 ---
 
-### Task 1: Repair the runtime storage contract in the skill specs
+### Task 1: Align the plan and design docs to the full parity architecture
+
+**Files:**
+- Modify: `Engine/381-Codex-Layered-Learning/docs/specs/2026-03-31-codex-claude-parity-design.md`
+- Add: `Engine/381-Codex-Layered-Learning/docs/specs/2026-03-31-codex-claude-full-parity-design.md`
+- Modify: `Engine/381-Codex-Layered-Learning/docs/plans/2026-03-31-codex-claude-parity-plan.md`
+- Modify: `Engine/381-Codex-Layered-Learning/docs/MOC.md`
+
+- [ ] **Step 1: Add the superseding full-parity design**
+
+Write the new design spec covering:
+- local `PROJECT.md` routing
+- canonical global `~/.agents/global/PROJECT.md`
+- generated global mirrors
+- worktree slug collapse
+- fuller `reflect` behavior and same-flow application
+
+- [ ] **Step 2: Retain the older parity design only as historical context**
+
+Update the older parity design only as needed to point readers at the new full
+parity design when requirements differ.
+
+- [ ] **Step 3: Rewrite the implementation plan to the new architecture**
+
+Replace the older Codex-only parity tasks with the new full-parity workstreams.
+
+- [ ] **Step 4: Link the new design in `docs/MOC.md`**
+
+Expected: the new spec is not orphaned and links cleanly from the docs index
+
+### Task 2: Update `wrap-up` for local `PROJECT.md` routing and global canonical routing
 
 **Files:**
 - Modify: `Engine/381-Codex-Layered-Learning/skills/wrap-up/SKILL.md`
-- Modify: `Engine/381-Codex-Layered-Learning/skills/diary/SKILL.md`
-- Modify: `Engine/381-Codex-Layered-Learning/skills/reflect/SKILL.md`
-- Test: `Engine/381-Codex-Layered-Learning/tests/manual-verification.md`
-
-- [ ] **Step 1: Identify every incorrect runtime-path reference**
-
-Run: `rg -n "~/.agents/memory|~/.claude|symlinked|shared with Claude Code" Engine/381-Codex-Layered-Learning/skills`
-Expected: all incorrect references are listed before edits start
-
-- [ ] **Step 2: Update `wrap-up` to the Codex-only storage contract**
-
-Edit `Engine/381-Codex-Layered-Learning/skills/wrap-up/SKILL.md` so runtime paths, safety boundaries, and final reporting all point only at Codex-native locations.
-
-- [ ] **Step 3: Update `diary` to the Codex-only storage contract**
-
-Edit `Engine/381-Codex-Layered-Learning/skills/diary/SKILL.md` so diary output and verification rules point only at `~/.codex/memory/diary/`.
-
-- [ ] **Step 4: Update `reflect` to the Codex-only storage contract**
-
-Edit `Engine/381-Codex-Layered-Learning/skills/reflect/SKILL.md` so diary, reflections, processed-log behavior, and promotion targets no longer reference Claude or `~/.agents/memory/`.
-
-- [ ] **Step 5: Re-read the edited skill specs**
-
-Run: `sed -n '1,260p' Engine/381-Codex-Layered-Learning/skills/wrap-up/SKILL.md`
-Run: `sed -n '1,220p' Engine/381-Codex-Layered-Learning/skills/diary/SKILL.md`
-Run: `sed -n '1,320p' Engine/381-Codex-Layered-Learning/skills/reflect/SKILL.md`
-Expected: no remaining Claude-sharing or `~/.agents/memory` runtime claims
-
-### Task 2: Restore Claude-equivalent `wrap-up` behavior in Codex
-
-**Files:**
-- Modify: `Engine/381-Codex-Layered-Learning/skills/wrap-up/SKILL.md`
+- Modify: `Engine/381-Codex-Layered-Learning/commands/wrap-up.md` only if present and retained
 - Modify: `Engine/381-Codex-Layered-Learning/README.md`
-- Modify: `Engine/381-Codex-Layered-Learning/docs/specs/2026-03-20-codex-layered-learning-design.md`
 
-- [ ] **Step 1: Write the failing behavior delta list**
+- [ ] **Step 1: Remove the now-obsolete push prompt from the parity contract**
 
-Add or update notes in `wrap-up/SKILL.md` so the missing Claude phases are explicitly enumerated before rewriting the execution flow.
-Expected: current gaps are represented directly in the spec text
+Edit `wrap-up/SKILL.md` and supporting docs so the closeout flow ends after
+`Diary Capture` with reporting, not push confirmation.
 
-- [ ] **Step 2: Restore the phase structure**
+- [ ] **Step 2: Replace the old destination mapping**
 
-Edit `wrap-up/SKILL.md` to reintroduce:
-- `Ship It`
-- `Remember It`
-- `Review & Apply`
-- `Diary Capture`
-- push confirmation
+Local operating guidance must route to repo `PROJECT.md`, not repo `AGENTS.md`.
+Global operating guidance must route to `~/.agents/global/PROJECT.md`.
 
-- [ ] **Step 3: Apply the documented memory-destination mapping**
+- [ ] **Step 3: Update the approval matrix**
 
-Inside `wrap-up/SKILL.md`, implement the mapping from the parity design:
-- project durable guidance -> repo `AGENTS.md` or typed notes, depending on content
-- global guidance -> `~/.codex/AGENTS.md`
-- scoped topic rules -> repo docs, repo `AGENTS.md`, or skill candidates
-- personal machine-local notes -> `~/.codex/skills/wrap-up/personal.md`
+Reflect the new rules:
+- `PROJECT.md` local operating improvements are auto-applied in `wrap-up`
+- global canonical edits still require approval
+- global mirror sync auto-runs after approved global edits
 
-- [ ] **Step 4: Apply the approval matrix and fallback rules**
+- [ ] **Step 4: Update worktree identity rules**
 
-Edit `wrap-up/SKILL.md` so auto-apply, approval-gated, and fallback behavior match the parity design exactly.
+Document and use the collapsed worktree-to-main-repo slug transform in
+`wrap-up`.
 
-- [ ] **Step 5: Update README and design doc to match**
+- [ ] **Step 5: Verify the high-level phase language**
 
-Edit `README.md` and `docs/specs/2026-03-20-codex-layered-learning-design.md` so they describe the restored phase-based immediate loop.
+Run: `rg -n "Ship It|Remember It|Review & Apply|Diary Capture|Push to remote|ask whether to push" Engine/381-Codex-Layered-Learning/skills/wrap-up/SKILL.md Engine/381-Codex-Layered-Learning/README.md`
+Expected: no stale push-prompt requirement remains
 
-- [ ] **Step 6: Verify the phase language is consistent**
-
-Run: `rg -n "Ship It|Remember It|Review & Apply|Diary Capture|Push" Engine/381-Codex-Layered-Learning`
-Expected: phase language appears in runtime and supporting docs consistently
-
-### Task 3: Restore Claude-equivalent `diary` capture depth in Codex
+### Task 3: Update `diary` for worktree-collapse identity and richer capture depth
 
 **Files:**
 - Modify: `Engine/381-Codex-Layered-Learning/skills/diary/SKILL.md`
 - Modify: `Engine/381-Codex-Layered-Learning/commands/diary.md`
 - Modify: `Engine/381-Codex-Layered-Learning/tests/manual-verification.md`
 
-- [ ] **Step 1: Compare the current template against Claude's**
+- [ ] **Step 1: Replace the shared slug transform**
 
-Use the existing review notes to enumerate the missing sections and metadata.
-Expected: a clear section delta list before edits
+Update `diary` so git worktrees collapse to the main repo slug before diary
+file naming and `MEMORY.md` lookup.
 
-- [ ] **Step 2: Expand the Codex diary template**
+- [ ] **Step 2: Preserve Claude-equivalent richer sections**
 
-Edit `skills/diary/SKILL.md` to add the richer Claude-equivalent fields while preserving:
-- Codex path-derived slugging
-- session-number coordination with `MEMORY.md`
-- redact requirements
+Verify and, if needed, refine the current diary template so it still covers:
+- `Time`
+- `Code Quality Preferences`
+- `Code Patterns and Decisions`
+- `Context and Technologies`
 
-- [ ] **Step 3: Add explicit fallback behavior**
+- [ ] **Step 3: Align the reference doc and manual verification**
 
-Edit `skills/diary/SKILL.md` so incompleteness, missing session ID, and missing branch behavior match the parity design.
+Expected: `commands/diary.md` and `tests/manual-verification.md` match the live
+runtime template and identity rules
 
-- [ ] **Step 4: Align the reference doc**
+### Task 4: Update `reflect` for full parity routing, richer synthesis, and same-flow application
 
-Edit `commands/diary.md` so the reference summary matches the runtime template exactly.
-
-- [ ] **Step 5: Update manual verification**
-
-Edit `tests/manual-verification.md` so standalone diary verification checks the richer template and metadata.
-
-- [ ] **Step 6: Re-read the final diary template**
-
-Run: `sed -n '1,260p' Engine/381-Codex-Layered-Learning/skills/diary/SKILL.md`
-Expected: the template is richer and internally consistent with the reference doc
-
-### Task 4: Restore Claude-equivalent `reflect` synthesis flow in Codex
-
-**Files:**
 - Modify: `Engine/381-Codex-Layered-Learning/skills/reflect/SKILL.md`
 - Modify: `Engine/381-Codex-Layered-Learning/commands/reflect.md`
 - Modify: `Engine/381-Codex-Layered-Learning/docs/specs/2026-03-20-codex-layered-learning-design.md`
+- Modify: repo `PROJECT.md` only where documentation of the triumvirate needs to reference the new routing behavior
 
-- [ ] **Step 1: Reintroduce Claude's prioritization model**
+- [ ] **Step 1: Replace the promotion model**
 
-Edit `skills/reflect/SKILL.md` so rule violations, strengthening actions, pattern grouping, and proposal formatting are aligned with Claude's reflect behavior.
+Route:
+- local operating improvements -> repo `PROJECT.md`
+- global operating improvements -> `~/.agents/global/PROJECT.md`
+- project memory content -> typed notes
 
-- [ ] **Step 2: Keep Codex-native destinations**
+- [ ] **Step 2: Expand the reflection template**
 
-Edit the promotion model so Claude targets map to Codex equivalents without cross-agent writes:
-- global -> `~/.codex/AGENTS.md`
-- project durable memory -> typed notes under `~/.codex/projects/<slug>/memory/`
-- repo docs / repo `AGENTS.md` / skills -> proposal targets as documented
+Add the fuller Claude-equivalent sections:
+- `Frequency`
+- `Root Cause`
+- `Efficiency Lessons`
+- `Notable Mistakes and Learnings`
 
-- [ ] **Step 3: Add explicit approval and processed-log semantics**
+- [ ] **Step 3: Change the application model**
 
-Edit `skills/reflect/SKILL.md` so destination approvals and `processed.log` advancement match the parity design exactly.
+Approved local and global edits must be appliable in the same reflection flow.
 
-- [ ] **Step 4: Align the reference doc and design doc**
+- [ ] **Step 4: Update `processed.log` semantics**
+
+Match the new rule:
+- reflection file first
+- approved edits applied next
+- processed entries appended only after the pass is accepted and the approved
+  edit path is resolved
+
+- [ ] **Step 5: Update worktree identity rules**
+
+Use the collapsed worktree-to-main-repo slug transform here too.
+
+- [ ] **Step 6: Align the reference doc and design docs**
 
 Edit `commands/reflect.md` and the main design spec so the documented routing and proposal flow match the runtime skill.
 
-- [ ] **Step 5: Verify processed-log and output-path consistency**
+- [ ] **Step 7: Verify processed-log and output-path consistency**
 
 Run: `rg -n "processed.log|~/.codex/memory/reflections|~/.codex/memory/diary" Engine/381-Codex-Layered-Learning`
 Expected: reflection paths are consistently Codex-native
 
-### Task 5: Align installer, verifier, tests, and repo docs with the repaired runtime
+### Task 5: Introduce the canonical global source and sync scripts
+
+**Files:**
+- Add: `Engine/381-Codex-Layered-Learning/scripts/sync_global_instructions.sh`
+- Add: `Engine/381-Codex-Layered-Learning/scripts/check_global_instructions_sync.sh`
+- Modify: `Engine/381-Codex-Layered-Learning/scripts/install_codex_layered_learning.sh`
+- Modify: `Engine/381-Codex-Layered-Learning/scripts/verify_codex_layered_learning_install.sh`
+- Add or seed at install time: `~/.agents/global/PROJECT.md`
+
+- [ ] **Step 1: Create the sync script contract**
+
+The sync script must render:
+- `~/.codex/AGENTS.md`
+- `~/.claude/CLAUDE.md`
+from canonical `~/.agents/global/PROJECT.md`
+
+- [ ] **Step 2: Create the drift-check script**
+
+Expected: a deterministic comparison path exists for generated global mirrors
+
+- [ ] **Step 3: Update installer behavior**
+
+Installer must ensure:
+- `~/.agents/global/` exists
+- canonical global file exists or is seeded safely
+- sync script is available
+- global mirrors can be generated
+
+- [ ] **Step 4: Update verifier behavior**
+
+Verifier must confirm:
+- canonical global source exists
+- both global mirrors exist
+- sync check passes
+
+### Task 6: Align installer, verifier, tests, and repo docs with the new parity architecture
 
 **Files:**
 - Modify: `Engine/381-Codex-Layered-Learning/README.md`
@@ -165,15 +195,17 @@ Expected: reflection paths are consistently Codex-native
 
 - [ ] **Step 1: Find all stale storage or behavior claims**
 
-Run: `rg -n "~/.agents/memory|~/.claude|proposal-only|same outcome|isolated from Claude" Engine/381-Codex-Layered-Learning`
+Run: `rg -n "~/.agents/memory|proposal-only|same outcome|isolated from Claude|ask whether to push|push confirmation|repo AGENTS.md" Engine/381-Codex-Layered-Learning`
 Expected: stale claims are listed before docs are edited
 
 - [ ] **Step 2: Update the public docs**
 
 Edit README, INSTALL, and the design spec so they describe:
-- Codex-native storage
-- Claude-parity behavior
-- no cross-agent durable sharing in this pass
+- repo-local `PROJECT.md` routing
+- canonical global `~/.agents/global/PROJECT.md`
+- generated global mirrors
+- no final push prompt in `wrap-up`
+- collapsed worktree identity
 
 - [ ] **Step 3: Update the verification doc**
 
@@ -189,30 +221,20 @@ Run: `sed -n '1,240p' Engine/381-Codex-Layered-Learning/README.md`
 Run: `sed -n '1,220p' Engine/381-Codex-Layered-Learning/INSTALL.md`
 Expected: docs match runtime behavior and no longer contradict the skills
 
-### Task 6: Reinstall and verify the live Codex skill copies
+### Task 7: Prepare live install and verification, but do not run it until explicitly approved
 
 **Files:**
-- Modify: `Engine/381-Codex-Layered-Learning/scripts/install_codex_layered_learning.sh` only if required
-- Modify: `Engine/381-Codex-Layered-Learning/scripts/verify_codex_layered_learning_install.sh` only if required
+- No additional files beyond the ones already updated above
 
-- [ ] **Step 1: Run the installer**
+- [ ] **Step 1: Verify repo copies are internally consistent**
 
-Run: `bash scripts/install_codex_layered_learning.sh`
-Expected: installed skill copies refresh under `~/.agents/skills/`
+Run: `cmp -s Engine/381-Codex-Layered-Learning/skills/wrap-up/SKILL.md Engine/381-Codex-Layered-Learning/skills/wrap-up/SKILL.md`
+Expected: trivial repo self-check passes before any live install step
 
-- [ ] **Step 2: Run the verifier**
+- [ ] **Step 2: Stop before touching live runtime**
 
-Run: `bash scripts/verify_codex_layered_learning_install.sh`
-Expected: install verification passes
-
-- [ ] **Step 3: Spot-check installed files**
-
-Run: `cmp -s skills/wrap-up/SKILL.md ~/.agents/skills/wrap-up/SKILL.md`
-Run: `cmp -s skills/diary/SKILL.md ~/.agents/skills/diary/SKILL.md`
-Run: `cmp -s skills/reflect/SKILL.md ~/.agents/skills/reflect/SKILL.md`
-Expected: all three comparisons succeed
-
-- [ ] **Step 4: Confirm runtime directories**
-
-Run: `ls -ld ~/.codex/skills/wrap-up ~/.codex/memory/diary ~/.codex/memory/reflections ~/.codex/projects`
-Expected: all documented Codex runtime directories exist
+Do not run installer or verifier until the user explicitly approves touching:
+- `~/.agents/skills/`
+- `~/.agents/global/`
+- `~/.codex/`
+- `~/.claude/`

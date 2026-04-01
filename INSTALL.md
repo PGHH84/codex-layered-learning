@@ -11,7 +11,9 @@ The architecture is the same across those surfaces. The main difference is how y
 - A local environment that can use Codex-style skills or can directly consume the `SKILL.md` files as runtime instructions
 - Access to your home directory so the runtime can use:
   - `~/.agents/skills/`
+  - `~/.agents/global/`
   - `~/.codex/`
+  - `~/.claude/`
 - Bash available for the install and verify scripts
 
 ## Install
@@ -35,6 +37,14 @@ The installer is idempotent. It:
   - `~/.agents/skills/wrap-up/SKILL.md`
   - `~/.agents/skills/diary/SKILL.md`
   - `~/.agents/skills/reflect/SKILL.md`
+- installs global sync helpers to:
+  - `~/.agents/global/sync_global_instructions.sh`
+  - `~/.agents/global/check_global_instructions_sync.sh`
+- ensures the canonical global instruction source exists at:
+  - `~/.agents/global/PROJECT.md`
+- regenerates the global runtime mirrors:
+  - `~/.codex/AGENTS.md`
+  - `~/.claude/CLAUDE.md`
 - ensures these runtime directories exist:
   - `~/.codex/skills/wrap-up/`
   - `~/.codex/memory/diary/`
@@ -57,6 +67,9 @@ Verification checks:
 - repo skill files exist
 - installed copies exist
 - installed copies match the repo
+- canonical global instruction source exists
+- global sync helpers exist
+- generated global mirrors exist and match the canonical source
 - required `~/.codex/` runtime directories exist
 - `processed.log` exists
 - documented `~/.codex/` runtime directories are real Codex-owned directories, not legacy symlinks
@@ -76,9 +89,11 @@ If your CLI or API-driven setup does not auto-discover them, use the installed c
 
 Behavior overview:
 
-- `wrap-up` runs `Ship It`, `Remember It`, `Review & Apply`, and `Diary Capture`, then asks whether to push
+- `wrap-up` runs `Ship It`, `Remember It`, `Review & Apply`, and `Diary Capture`
 - `diary` captures a richer structured session record under `~/.codex/memory/diary/`
-- `reflect` writes a reflection file under `~/.codex/memory/reflections/` and only advances `processed.log` after the reflection pass is accepted
+- `reflect` writes a reflection file under `~/.codex/memory/reflections/` and only advances `processed.log` after the reflection pass is accepted and approved edits for that pass are resolved
+- project-local operating guidance converges through repo `PROJECT.md`
+- global operating guidance converges through `~/.agents/global/PROJECT.md`
 
 ## Optional Personal Wrap-Up Extension
 
@@ -149,6 +164,9 @@ Use the repo or installed `SKILL.md` files directly in your Codex/OpenAI coding 
 
 No. This repo intentionally does not ship a Claude-style hook flow. Context-loss fallback remains manual-only until a safe Codex-native trigger surface is confirmed.
 
-### Where should runtime memory live?
+### Where should runtime memory and durable guidance live?
 
-Under `~/.codex/` only. Do not create repo-local runtime memory folders in working repositories.
+- runtime memory: under `~/.codex/`
+- canonical global operating guidance: `~/.agents/global/PROJECT.md`
+- generated global mirrors: `~/.codex/AGENTS.md` and `~/.claude/CLAUDE.md`
+- never create repo-local runtime memory folders in working repositories

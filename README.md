@@ -1,6 +1,6 @@
 # Codex Layered Learning
 
-A file-first layered learning system for Codex and OpenAI coding runtimes. It preserves session context, keeps durable project knowledge under `~/.codex/`, restores Claude-equivalent session-close workflow phases, and keeps Codex runtime storage independent from Claude.
+A file-first layered learning system for Codex and OpenAI coding runtimes. It preserves session context, keeps durable project knowledge under `~/.codex/`, restores Claude-equivalent session-close workflow phases, routes local operating guidance through repo `PROJECT.md`, and routes global operating guidance through a canonical shared source.
 
 ## Who It Is For
 
@@ -10,26 +10,27 @@ This repo is for Codex-oriented coding workflows:
 - Codex CLI
 - IDE or API-driven OpenAI coding setups that can use the same local skill files and runtime storage model
 
-It is not a ChatGPT project, and it is intentionally separate from Claude-specific runtime surfaces.
+It is not a ChatGPT project. Diary and reflection storage remain split by agent, while durable global operating guidance can be synchronized deliberately through a canonical shared source.
 
 ## Safety Boundary
 
-This project is intentionally isolated from Claude Code.
+This project keeps raw runtime memory Codex-native while allowing explicit
+global mirror sync for durable operating guidance.
 
-- No writes to `~/.claude/**`
-- No Claude-compatible hooks, commands, or runtime files
+- No shared diary storage
+- No shared reflection storage
 - No repo-local runtime memory folders in working repositories
-- Runtime memory lives only under `~/.codex/`
-
-Claude-compatible functionality remains in the separate Claude Layered Learning repository.
+- Project memory lives under `~/.codex/`
+- Global operating guidance is edited canonically in `~/.agents/global/PROJECT.md`
+- `~/.codex/AGENTS.md` and `~/.claude/CLAUDE.md` are generated mirrors, not primary sources
 
 ## How It Works
 
 The system has two learning loops:
 
-**Immediate loop:** `wrap-up` runs `Ship It`, `Remember It`, `Review & Apply`, and `Diary Capture`, then asks whether to push.
+**Immediate loop:** `wrap-up` runs `Ship It`, `Remember It`, `Review & Apply`, and `Diary Capture`.
 
-**Deferred loop:** `reflect` analyzes accumulated diary entries, prior reflections, and project memory to identify repeated patterns and propose durable promotions to Codex-owned or repo-owned destinations.
+**Deferred loop:** `reflect` analyzes accumulated diary entries, prior reflections, and project memory to identify repeated patterns and propose or apply approved durable promotions to canonical local and global instruction sources.
 
 ```text
 Session work
@@ -46,13 +47,14 @@ wrap-up (immediate loop)
     |   |-- update project MEMORY.md
     |   |-- optionally follow personal.md
     |   |-- reconcile final project state
-    |   |-- route durable candidates to the right Codex destination
+    |   |-- route local operating guidance to PROJECT.md
+    |   |-- route global operating guidance to ~/.agents/global/PROJECT.md
     |-- Review & Apply
-    |   |-- apply only actions allowed by the approval matrix
-    |   |-- present approval-gated durable proposals
+    |   |-- auto-apply local PROJECT.md improvements
+    |   |-- apply approved global canonical edits
+    |   |-- sync generated global mirrors after approved global edits
     |-- Diary Capture
     |   |-- trigger diary
-    |-- ask whether to push
     |
     v
 diary (observation layer)
@@ -65,7 +67,7 @@ reflect (pattern layer)
     |-- cross-session analysis
     |-- routing by project/global scope
     |-- reflection file auto-written
-    |-- durable promotions proposed, never auto-applied
+    |-- approved durable promotions applied in the same flow
     |-- saved to ~/.codex/memory/reflections/
 ```
 
@@ -76,12 +78,12 @@ reflect (pattern layer)
 | Project `MEMORY.md` | Yes | Reads only |
 | Central diary | Triggers `diary` | Reads |
 | Central reflections | No | Yes |
-| Project typed notes | Approval-gated | Approval-gated |
+| Project typed notes | Auto-apply when clearly memory | Approval-gated |
+| Repo `PROJECT.md` | Auto-apply for local operating improvements | Approval-gated |
 | Repo docs | Directly affected docs may be auto-updated | Approval-gated |
-| Repo `AGENTS.md` | Approval-gated | Approval-gated |
-| Global `~/.codex/AGENTS.md` | Approval-gated | Approval-gated |
+| Global canonical `~/.agents/global/PROJECT.md` | Approval-gated | Approval-gated |
+| Generated mirrors `~/.codex/AGENTS.md` and `~/.claude/CLAUDE.md` | Auto-sync only after approved global canonical edits | Auto-sync only after approved global canonical edits |
 | Commit / deploy / task cleanup | Auto-run when the documented conditions exist | No |
-| Push to remote | Always ask explicitly | No |
 | `~/.codex/skills/wrap-up/personal.md` | Optional machine-local extension | No |
 
 ## Runtime Authority
@@ -120,8 +122,13 @@ For the full operational guide, see [INSTALL.md](INSTALL.md).
 ## Runtime Storage
 
 ```text
+~/.agents/
+  global/
+    PROJECT.md
+    sync_global_instructions.sh
+    check_global_instructions_sync.sh
 ~/.codex/
-  AGENTS.md
+  AGENTS.md                 # generated from ~/.agents/global/PROJECT.md
   skills/
     wrap-up/
       personal.md            # optional, machine-local
@@ -139,6 +146,8 @@ For the full operational guide, see [INSTALL.md](INSTALL.md).
         project_*.md
         reference_*.md
         user_*.md
+~/.claude/
+  CLAUDE.md                 # generated from ~/.agents/global/PROJECT.md
 ```
 
 Core rules:
@@ -146,6 +155,9 @@ Core rules:
 - project memory is scoped under `~/.codex/projects/<slug>/memory/`
 - diary entries are centralized under `~/.codex/memory/diary/`
 - reflections are centralized under `~/.codex/memory/reflections/`
+- repo-local operating guidance is owned by repo `PROJECT.md`
+- global operating guidance is owned by `~/.agents/global/PROJECT.md`
+- `~/.codex/AGENTS.md` and `~/.claude/CLAUDE.md` are generated mirrors
 - `processed.log` uses the canonical accepted-entry format: `<diary-filename> | <processed-date> | <reflection-filename> | accepted`
 - typed project memory notes use the `feedback_*.md`, `project_*.md`, `reference_*.md`, and `user_*.md` taxonomy described in [`docs/typed-memory-notes.md`](docs/typed-memory-notes.md)
 - markdown is the source of truth in v1

@@ -23,30 +23,32 @@ Run four phases in order:
 3. `Review & Apply`
 4. `Diary Capture`
 
-Then ask whether to push.
-
 ## Non-Goals
 
 - cross-session synthesis across many diary entries
 - writing runtime memory into the working repository
-- reading from or writing to `~/.claude/**`
-- cross-agent memory sharing in this pass
+- direct manual editing of generated mirror files
+- shared diary or reflection storage across agents
 
 ## Hard Safety Boundaries
 
 - never create repo-local runtime memory folders in working repositories
-- never write runtime memory under `~/.agents/memory/` or `~/.claude/**`
-- never auto-push
-- never auto-apply repo `AGENTS.md`, global `~/.codex/AGENTS.md`, typed-note, or new-skill changes without approval
+- never write runtime memory under `~/.agents/memory/`
+- never edit repo `AGENTS.md` or repo `CLAUDE.md` directly as operating-instruction sources
+- never edit `~/.codex/AGENTS.md` or `~/.claude/CLAUDE.md` directly when a generated mirror path should be used
+- never write arbitrary `~/.claude/**` state outside the approved global mirror-sync path
+- never auto-apply global canonical edits or new-skill changes without approval
 - never do speculative doc edits, speculative file moves, or destructive cleanup
 
 ## Runtime Paths
 
 - project memory: `~/.codex/projects/<slug>/memory/MEMORY.md`
 - project durable typed notes: `~/.codex/projects/<slug>/memory/`
+- project operating guidance source: repo `PROJECT.md`
 - diary output: `~/.codex/memory/diary/`
 - reflections: `~/.codex/memory/reflections/`
-- global durable guidance: `~/.codex/AGENTS.md`
+- global operating guidance source: `~/.agents/global/PROJECT.md`
+- generated global mirrors: `~/.codex/AGENTS.md`, `~/.claude/CLAUDE.md`
 - optional personal extension: `~/.codex/skills/wrap-up/personal.md`
 
 ## Trigger Phrases
@@ -65,9 +67,10 @@ Run this skill when the user says things like:
 Use this exact transform so `wrap-up`, `diary`, and `reflect` agree on project identity:
 
 1. If inside a git repository, resolve the canonical project root with `git rev-parse --show-toplevel`.
-2. Otherwise, use the canonical absolute working directory.
-3. Resolve symlinks before deriving the slug.
-4. Replace every `/` in the canonical absolute path with `-`.
+2. If that repo root contains `/.worktrees/`, strip the `/.worktrees/<name>` suffix and use the parent repo path as the canonical project root.
+3. Otherwise, if not inside a git repository, use the canonical absolute working directory.
+4. Resolve symlinks before deriving the slug.
+5. Replace every `/` in the canonical absolute path with `-`.
 
 Example:
 
@@ -76,7 +79,7 @@ Example:
 
 ## Execution Sequence
 
-Run these phases in order, then ask whether to push.
+Run these phases in order.
 
 ### Phase 1: `Ship It`
 
@@ -166,7 +169,7 @@ Check whether `~/.codex/skills/wrap-up/personal.md` exists.
 
 If the personal-extension pass materially changes tracked project state, reconcile `MEMORY.md` so it reflects the final post-extension state.
 
-#### Claude-to-Codex destination mapping
+#### Local and global destination mapping
 
 Use this mapping when deciding where learned material belongs:
 
@@ -174,8 +177,8 @@ Use this mapping when deciding where learned material belongs:
 - repeated project lessons or guardrails -> `feedback_*.md`
 - supporting lookup material -> `reference_*.md`
 - stable recurring user preferences -> `user_*.md`
-- repo-wide operating rules -> repo `AGENTS.md`
-- cross-project Codex behavior rules -> `~/.codex/AGENTS.md`
+- project-local operating rules -> repo `PROJECT.md`
+- cross-project behavior rules -> `~/.agents/global/PROJECT.md`
 - reusable procedural workflows -> skill candidate
 - current-session state only -> `MEMORY.md`
 
@@ -187,15 +190,13 @@ Use this mapping when deciding where learned material belongs:
   - commit creation when uncommitted changes exist
   - deploy when a documented deploy path exists
   - repo-owned task cleanup
+  - repo `PROJECT.md` updates for local operating improvements
+  - typed-note creation or edits under `~/.codex/projects/<slug>/memory/` when the destination is clearly project memory rather than repo operating guidance
 - require approval:
-  - new or edited typed note under `~/.codex/projects/<slug>/memory/`
-  - repo `AGENTS.md` edits
-  - `~/.codex/AGENTS.md` edits
+  - `~/.agents/global/PROJECT.md` edits
   - new skill or skill-spec creation
-- always ask explicitly:
-  - push to remote
 
-`wrap-up` may surface typed-note, repo-`AGENTS.md`, global-`AGENTS.md`, or skill candidates, but it must not create or edit them automatically without approval.
+When an approved global canonical edit is applied, run the global mirror-sync path immediately afterward so `~/.codex/AGENTS.md` and `~/.claude/CLAUDE.md` stay aligned.
 
 ### Phase 3: `Review & Apply`
 
@@ -213,9 +214,9 @@ Finding categories:
 Action types:
 
 - repo doc update
+- repo `PROJECT.md` update
 - typed note candidate
-- repo `AGENTS.md` candidate
-- global `~/.codex/AGENTS.md` candidate
+- global `~/.agents/global/PROJECT.md` candidate
 - skill candidate
 - no action needed
 
@@ -225,6 +226,7 @@ Rules:
 - strengthen existing guidance before proposing a parallel duplicate
 - auto-apply only actions allowed by the approval matrix
 - present approval-gated items as targeted proposals with destination and rationale
+- do not route project-local operating improvements to repo `AGENTS.md` or repo `CLAUDE.md`
 
 Present findings in two sections:
 
@@ -243,15 +245,6 @@ Rules:
 - `diary` still runs when approval-gated durable changes were declined
 - `diary` still runs when some wrap-up steps were skipped with documented fallback status
 
-### Final Step: Push
-
-After the four phases are complete, ask:
-
-`Push to remote? (y/n)`
-
-- if yes, push committed changes
-- if no or no response, skip
-
 ## Typed Note Policy
 
 When a durable-learning candidate belongs in project memory, use [`docs/typed-memory-notes.md`](../../docs/typed-memory-notes.md):
@@ -266,12 +259,12 @@ Avoid proposing a new typed note when:
 - the observation is one-off or still uncertain
 - the information belongs in the `Current State` snapshot or next steps only
 - an existing typed note can be strengthened instead
-- repo docs, `AGENTS.md`, or a skill would be the clearer long-term owner
+- repo docs, `PROJECT.md`, or a skill would be the clearer long-term owner
 
 ## Missing-Surface Fallback Rules
 
 - if no `/commit` skill exists, use normal git commands directly
-- if the working directory is not a git repository, skip commit and push with `n/a`
+- if the working directory is not a git repository, skip commit with `n/a`
 - if no documented deploy script or deploy skill exists, skip deploy without asking for a manual deploy
 - if no repo task file or documented task surface exists, skip task cleanup and state that no project task surface was found
 - if file placement conventions are not documented, only correct obvious misplaced document files and avoid speculative renames or moves
@@ -281,8 +274,9 @@ Avoid proposing a new typed note when:
 
 End with a concise report that states:
 
-- what was shipped or explicitly skipped
+- what was shipped, updated, or explicitly skipped
 - what was captured in `MEMORY.md`
+- whether repo `PROJECT.md` was updated
 - whether the optional personal extension ran, was absent, or stopped short
 - that `diary` was run
 - any open risks
@@ -292,9 +286,11 @@ End with a concise report that states:
 
 Before treating this skill spec as correct, verify that:
 
-- the high-level phase structure is `Ship It` -> `Remember It` -> `Review & Apply` -> `Diary Capture` -> push confirmation
-- runtime storage paths point only to `~/.codex/...` and `~/.agents/skills/...`
+- the high-level phase structure is `Ship It` -> `Remember It` -> `Review & Apply` -> `Diary Capture`
+- runtime storage paths point to the documented Codex runtime paths plus the canonical global source under `~/.agents/global/`
 - the destination mapping matches the parity design
 - the approval matrix and fallback rules are explicit
+- project-local operating improvements route to repo `PROJECT.md`
+- approved global canonical edits trigger the mirror-sync path
 - `diary` cannot be skipped by a missing personal extension or declined durable edits
 - the session-number source of truth is `MEMORY.md` with diary fallback only when needed

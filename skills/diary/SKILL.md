@@ -46,9 +46,10 @@ Use one source of truth for the session number so `wrap-up` and standalone `diar
 Use this exact transform so `diary`, `wrap-up`, and `reflect` agree on project identity:
 
 1. If inside a git repository, resolve the canonical project root with `git rev-parse --show-toplevel`.
-2. Otherwise, use the canonical absolute working directory.
-3. Resolve symlinks before deriving the slug.
-4. Replace every `/` in the canonical absolute path with `-`.
+2. If that repo root contains `/.worktrees/`, strip the `/.worktrees/<name>` suffix and use the parent repo path as the canonical project root.
+3. Otherwise, if not inside a git repository, use the canonical absolute working directory.
+4. Resolve symlinks before deriving the slug.
+5. Replace every `/` in the canonical absolute path with `-`.
 
 Example:
 
@@ -185,6 +186,7 @@ Capture only preferences that are stable enough to help future sessions. Do not 
 Before treating this skill as correct, verify that:
 
 - the path-to-slug transform is explicit and shared with `wrap-up` and `reflect`
+- worktree roots collapse to the main repo identity before slugging
 - the diary output path stays under `~/.codex/memory/diary/`
 - the required sections match the exact template
 - the skill remains context-first and uses logs only as fallback

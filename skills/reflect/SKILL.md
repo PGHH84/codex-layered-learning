@@ -18,16 +18,17 @@ This skill is the runtime source of truth for `reflect`.
 
 - it reads Codex diary entries and supporting memory
 - it identifies repeated patterns, rule violations, contradictions, and one-off observations
-- it routes durable learnings to Codex-owned or repo-owned destinations
-- it proposes durable promotions without applying them automatically
+- it routes durable learnings to canonical local or global instruction sources
+- it applies approved durable promotions in the same reflection flow
 
 `reflect` runs separately from `wrap-up`.
 
 ## Safety Boundaries
 
 - never create repo-local runtime memory folders in working repositories
-- never auto-apply edits to repo `AGENTS.md`, `~/.codex/AGENTS.md`, repo docs, project typed notes, or skills
-- never read from or write to `~/.claude/**`
+- never edit repo `AGENTS.md` or repo `CLAUDE.md` directly as operating-instruction sources
+- never edit `~/.codex/AGENTS.md` or `~/.claude/CLAUDE.md` directly when a generated mirror path should be used
+- never write arbitrary `~/.claude/**` state outside the approved global mirror-sync path
 - keep markdown as the source of truth in this pass
 
 ## Runtime Paths
@@ -36,17 +37,18 @@ This skill is the runtime source of truth for `reflect`.
 - reflections: `~/.codex/memory/reflections/`
 - processed index: `~/.codex/memory/reflections/processed.log`
 - project memory: `~/.codex/projects/<slug>/memory/`
-- global durable guidance candidate: `~/.codex/AGENTS.md`
+- project operating guidance source: repo `PROJECT.md`
+- global operating guidance source: `~/.agents/global/PROJECT.md`
+- generated global mirrors: `~/.codex/AGENTS.md`, `~/.claude/CLAUDE.md`
 
 ## Promotion Model
 
-Reflect routes candidates to the nearest Codex-owned equivalent of Claude's durable targets.
+Reflect routes candidates to the canonical durable destination for the signal.
 
 | Scope | Target |
 |---|---|
-| Global, cross-project Codex behavior | `~/.codex/AGENTS.md` |
-| Repo-wide operating guidance | repo `AGENTS.md` |
-| Existing project-owned documentation | repo docs |
+| Global, cross-project behavior | `~/.agents/global/PROJECT.md` |
+| Project operating guidance | repo `PROJECT.md` |
 | Project durable memory | typed notes under `~/.codex/projects/<slug>/memory/` |
 | Reusable procedural workflow | skill candidate |
 | Too weak or one-off | no durable promotion |
@@ -58,9 +60,10 @@ Before proposing any promotion, inspect the current destination if it exists and
 Use this exact transform so `reflect`, `wrap-up`, and `diary` agree on project identity:
 
 1. If inside a git repository, resolve the canonical project root with `git rev-parse --show-toplevel`.
-2. Otherwise, use the canonical absolute working directory.
-3. Resolve symlinks before deriving the slug.
-4. Replace every `/` in the canonical absolute path with `-`.
+2. If that repo root contains `/.worktrees/`, strip the `/.worktrees/<name>` suffix and use the parent repo path as the canonical project root.
+3. Otherwise, if not inside a git repository, use the canonical absolute working directory.
+4. Resolve symlinks before deriving the slug.
+5. Replace every `/` in the canonical absolute path with `-`.
 
 ## Inputs
 
@@ -82,8 +85,8 @@ Supporting context:
 - `~/.codex/memory/reflections/processed.log`
 - project `~/.codex/projects/<slug>/memory/MEMORY.md` when project context is relevant
 - existing typed project memory notes under `~/.codex/projects/<slug>/memory/` when project-memory promotion candidates are being considered
-- repo `AGENTS.md` and relevant repo docs when repo-level promotion candidates are being considered
-- global `~/.codex/AGENTS.md` when evaluating global promotion candidates
+- repo `PROJECT.md` when project operating-guidance candidates are being considered
+- canonical global `~/.agents/global/PROJECT.md` when evaluating global promotion candidates
 
 ## Processing Workflow
 
@@ -96,7 +99,10 @@ Supporting context:
 7. Prioritize repeated violation of existing guidance over inventing a new rule.
 8. Route each repeated learning by scope and destination, strengthening weak existing guidance before proposing a brand-new durable note.
 9. Write the reflection file to `~/.codex/memory/reflections/YYYY-MM-DD-reflection-N.md`.
-10. Update `processed.log` only after the user accepts the reflection pass as complete or explicitly asks to mark the analyzed diary entries as processed.
+10. Present proposed durable edits with destination, evidence, and confidence.
+11. If the user approves any durable edits, apply them in the same flow.
+12. If approved global canonical edits were applied, run the global mirror-sync path.
+13. Update `processed.log` only after the user accepts the reflection pass as complete and any approved durable edits for that pass were applied.
 
 ## Carry-Forward Rule
 
@@ -171,22 +177,24 @@ Avoid creating a new typed note when:
 
 - the signal is one-off, weak, or better kept in the reflection only
 - an existing typed note can be strengthened instead
-- repo docs, `AGENTS.md`, or a skill is the clearer durable destination
+- repo `PROJECT.md` or a skill is the clearer durable destination
 - the content is temporary task state rather than durable memory
 
 ## Approval Model
 
-No durable edit is automatic.
+No durable edit is automatic until the user approves it.
 
 - auto-write:
   - reflection markdown file
 - require approval:
-  - repo `AGENTS.md` edits
-  - `~/.codex/AGENTS.md` edits
-  - repo doc edits
+  - repo `PROJECT.md` edits
   - project typed note creation or edits
+  - `~/.agents/global/PROJECT.md` edits
   - skill candidate creation
-- update `processed.log` only after the user accepts the reflection pass as complete
+- auto-run after approved global canonical edits:
+  - regenerate `~/.codex/AGENTS.md`
+  - regenerate `~/.claude/CLAUDE.md`
+- update `processed.log` only after the user accepts the reflection pass as complete and approved actions are resolved
 
 Every proposed promotion must include:
 
@@ -200,8 +208,8 @@ Every proposed promotion must include:
 
 - store processed diary entry identifiers in `~/.codex/memory/reflections/processed.log`
 - canonical line format: `<diary-filename> | <processed-date> | <reflection-filename> | accepted`
-- acceptance of the reflection pass advances `processed.log`
-- approval of durable edits is separate from reflection acceptance
+- reflection acceptance is required before advancing `processed.log`
+- approved durable edits must be applied in the same flow before advancing `processed.log`
 - declining all durable edits does not block `processed.log` advancement if the user still accepts the reflection as complete
 - `include all entries` analyzes both processed and unprocessed entries for the selected scope without deleting prior reflections
 - targeted `reprocess` analyzes a named entry or filtered subset again when the user explicitly asks
@@ -229,7 +237,9 @@ Every proposed promotion must include:
 [Omit this section if none.]
 
 1. **Rule**: ...
+   - **Frequency**: ...
    - **Violation pattern**: ...
+   - **Root Cause**: ...
    - **Impact**: ...
    - **Strengthening action**: ...
 
@@ -247,18 +257,24 @@ Every proposed promotion must include:
 ### Project-Specific Patterns
 1. ...
 
+## Efficiency Lessons
+1. ...
+
+## Notable Mistakes and Learnings
+1. ...
+
 ## One-Off Observations
 - ...
 
 ## Proposed Promotions
 
-### Global AGENTS.md candidates
+### Global canonical candidates
+- ...
+
+### Project `PROJECT.md` candidates
 - ...
 
 ### Project memory candidates
-- ...
-
-### Repo AGENTS.md / docs candidates
 - ...
 
 ### Skill candidates
@@ -278,8 +294,10 @@ Before treating this skill as correct, verify that:
 
 - filters cover unprocessed, last `N`, date range, project slug, and keyword
 - the path-to-slug transform is explicit and shared with `wrap-up` and `diary`
-- all runtime paths are Codex-native
-- `processed.log` advancement depends on reflection acceptance, not durable-edit approval
+- worktree roots collapse to the main repo identity before slugging
+- runtime paths include the canonical global source and generated global mirrors
+- approved durable edits can be applied in the same reflection flow
+- `processed.log` advancement depends on reflection acceptance and approved-edit resolution
 - routing, confidence, approval, and destination rules remain consistent with the parity design
 - destination checks include semantic duplicate review and conflict handling
 - the typed note policy covers `feedback_*.md`, `project_*.md`, `reference_*.md`, and `user_*.md`

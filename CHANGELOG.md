@@ -17,15 +17,17 @@ Format: [Semantic Versioning](https://semver.org/) — `MAJOR.MINOR.PATCH`
   - `Remember It`
   - `Review & Apply`
   - `Diary Capture`
-  - explicit push confirmation
 - Repaired the runtime storage contract so the Codex skills, docs, and verification flows consistently use `~/.codex/` for runtime memory
 - Expanded `diary` to the richer Claude-equivalent capture shape, including `Time`, `Code Quality Preferences`, `Code Patterns and Decisions`, and `Context and Technologies`
-- Clarified `reflect` routing, approval behavior, and `processed.log` advancement so reflection acceptance and durable-edit approval are separate decisions
+- Clarified `reflect` routing, approval behavior, and `processed.log` advancement so reflection acceptance, approved-edit application, and processed-entry advancement follow one coherent flow
+- Routed project-local operating guidance through repo `PROJECT.md` instead of generated repo mirrors
+- Introduced canonical global operating guidance under `~/.agents/global/PROJECT.md` with generated mirrors at `~/.codex/AGENTS.md` and `~/.claude/CLAUDE.md`
+- Collapsed git worktrees back to the main repo slug so one project does not fragment across worktree-specific memory identities
 
 ### Fixed
 - Removed contradictory public/runtime claims that Codex diary or reflection memory lived under `~/.agents/memory/`
 - Removed contradictory runtime claims of shared or symlinked Codex/Claude memory
-- Aligned README, INSTALL, reference docs, design docs, and manual verification with the repaired runtime behavior
+- Aligned README, INSTALL, reference docs, design docs, scripts, and manual verification with the repaired runtime behavior
 - Hardened install verification so legacy symlinked runtime paths are detected instead of silently passing
 
 ## [1.2.0] - 2026-03-21

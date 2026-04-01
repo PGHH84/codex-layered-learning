@@ -5,7 +5,12 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SKILLS_SRC_DIR="$ROOT_DIR/skills"
 SKILLS_DST_DIR="$HOME/.agents/skills"
+GLOBAL_ROOT_DIR="$HOME/.agents/global"
 CODEX_ROOT_DIR="$HOME/.codex"
+CLAUDE_ROOT_DIR="$HOME/.claude"
+GLOBAL_CANONICAL_FILE="$GLOBAL_ROOT_DIR/PROJECT.md"
+GLOBAL_SYNC_FILE="$GLOBAL_ROOT_DIR/sync_global_instructions.sh"
+GLOBAL_CHECK_FILE="$GLOBAL_ROOT_DIR/check_global_instructions_sync.sh"
 
 status=0
 
@@ -76,6 +81,11 @@ check_owned_dir "$CODEX_ROOT_DIR/memory/diary" "diary directory"
 check_owned_dir "$CODEX_ROOT_DIR/memory/reflections" "reflections directory"
 check_file "$CODEX_ROOT_DIR/memory/reflections/processed.log" "processed.log"
 check_owned_dir "$CODEX_ROOT_DIR/projects" "projects directory"
+check_file "$GLOBAL_CANONICAL_FILE" "canonical global instruction file"
+check_file "$GLOBAL_SYNC_FILE" "installed global sync script"
+check_file "$GLOBAL_CHECK_FILE" "installed global sync checker"
+check_file "$CODEX_ROOT_DIR/AGENTS.md" "Codex global mirror"
+check_file "$CLAUDE_ROOT_DIR/CLAUDE.md" "Claude global mirror"
 
 if find "$CODEX_ROOT_DIR/projects" -type l -path '*/memory' -print -quit | grep -q .; then
   printf '[fail] symlinked project memory directories remain under %s\n' "$CODEX_ROOT_DIR/projects" >&2
@@ -89,6 +99,14 @@ if [[ -f "$CODEX_ROOT_DIR/skills/wrap-up/personal.md" ]]; then
   printf '[ok] optional personal extension present: %s\n' "$CODEX_ROOT_DIR/skills/wrap-up/personal.md"
 else
   printf '[ok] optional personal extension absent: %s\n' "$CODEX_ROOT_DIR/skills/wrap-up/personal.md"
+fi
+
+if [[ -x "$GLOBAL_CHECK_FILE" ]]; then
+  if "$GLOBAL_CHECK_FILE"; then
+    :
+  else
+    status=1
+  fi
 fi
 
 if [[ "$status" -eq 0 ]]; then
